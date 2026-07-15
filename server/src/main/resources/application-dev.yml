@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/gzplatform;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE;DATABASE_TO_LOWER=TRUE;NON_KEYWORDS=YEAR,STATUS,TYPE,NAME,CODE,LEVEL,SCORE,RATE,BATCH,RANK,VALUE,KEY,USER,CURRENT
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto

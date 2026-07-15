@@ -1,0 +1,118 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "贵州高校数据平台",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/university/list",
+      "style": {
+        "navigationBarTitleText": "高校列表"
+      }
+    },
+    {
+      "path": "pages/university/detail",
+      "style": {
+        "navigationBarTitleText": "高校详情"
+      }
+    },
+    {
+      "path": "pages/score/query",
+      "style": {
+        "navigationBarTitleText": "分数线查询"
+      }
+    },
+    {
+      "path": "pages/zhuanshengben/index",
+      "style": {
+        "navigationBarTitleText": "专升本专区"
+      }
+    },
+    {
+      "path": "pages/zhuanshengben/score-query",
+      "style": {
+        "navigationBarTitleText": "专升本分数线"
+      }
+    },
+    {
+      "path": "pages/zhuanshengben/plan-list",
+      "style": {
+        "navigationBarTitleText": "招生计划"
+      }
+    },
+    {
+      "path": "pages/zhuanshengben/comparison",
+      "style": {
+        "navigationBarTitleText": "院校对比"
+      }
+    },
+    {
+      "path": "pages/zhuanshengben/guide",
+      "style": {
+        "navigationBarTitleText": "报考指南"
+      }
+    },
+    {
+      "path": "pages/compare/index",
+      "style": {
+        "navigationBarTitleText": "院校对比"
+      }
+    },
+    {
+      "path": "pages/statistics/index",
+      "style": {
+        "navigationBarTitleText": "数据统计"
+      }
+    },
+    {
+      "path": "pages/mine/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "贵州高校数据平台",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F5F6FA",
+    "app-plus": {
+      "background": "#F5F6FA"
+    }
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#2B6CB0",
+    "borderStyle": "black",
+    "backgroundColor": "#FFFFFF",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "static/images/tab-home.png",
+        "selectedIconPath": "static/images/tab-home-active.png"
+      },
+      {
+        "pagePath": "pages/university/list",
+        "text": "高校",
+        "iconPath": "static/images/tab-school.png",
+        "selectedIconPath": "static/images/tab-school-active.png"
+      },
+      {
+        "pagePath": "pages/zhuanshengben/index",
+        "text": "专升本",
+        "iconPath": "static/images/tab-zsb.png",
+        "selectedIconPath": "static/images/tab-zsb-active.png"
+      },
+      {
+        "pagePath": "pages/mine/index",
+        "text": "我的",
+        "iconPath": "static/images/tab-mine.png",
+        "selectedIconPath": "static/images/tab-mine-active.png"
+      }
+    ]
+  }
+}

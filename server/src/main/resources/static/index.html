@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贵州高校数据平台</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0b1120;
+            --bg-card: #111827;
+            --bg-card-hover: #1a2538;
+            --border: rgba(255,255,255,0.06);
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --blue: #3b82f6;
+            --orange: #f59e0b;
+            --green: #10b981;
+            --red: #ef4444;
+            --purple: #8b5cf6;
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Noto Sans SC', -apple-system, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        /* === HEADER === */
+        .hero {
+            position: relative;
+            padding: 48px 40px 32px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(ellipse at 30% 50%, rgba(59,130,246,0.08) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 50%, rgba(245,158,11,0.06) 0%, transparent 50%);
+            animation: heroGlow 20s ease-in-out infinite alternate;
+        }
+        @keyframes heroGlow { 0%{transform:translate(0)} 100%{transform:translate(-5%,3%)} }
+        .hero-content { position:relative; max-width:1280px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; }
+        .hero-left h1 { font-size:32px; font-weight:900; letter-spacing:2px; background:linear-gradient(135deg,#fff,#94a3b8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .hero-left p { color:var(--text-secondary); margin-top:6px; font-size:14px; }
+        /* === DAILY QUOTE === */
+        .daily-quote {
+            margin-top:14px; padding:12px 18px;
+            background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(59,130,246,0.06));
+            border-left:3px solid var(--purple); border-radius:0 10px 10px 0;
+            max-width:480px;
+        }
+        .daily-quote .dq-text {
+            font-size:14px; font-weight:500; color:var(--text-primary);
+            line-height:1.6; font-style:italic;
+        }
+        .daily-quote .dq-author {
+            font-size:12px; color:var(--text-muted); margin-top:6px;
+        }
+        .countdown-badge {
+            display:flex; align-items:center; gap:16px;
+            background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2);
+            padding:14px 24px; border-radius:var(--radius);
+        }
+        .countdown-badge .cd-label { font-size:13px; color:var(--orange); }
+        .countdown-badge .cd-days { font-size:36px; font-weight:900; color:var(--orange); line-height:1; }
+        .countdown-badge .cd-unit { font-size:14px; color:var(--text-secondary); margin-left:2px; }
+        /* === NAV === */
+        .nav-bar { position:sticky; top:0; z-index:100; background:rgba(11,17,32,0.85); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); }
+        .nav-inner { max-width:1280px; margin:0 auto; display:flex; gap:0; padding:0 40px; }
+        .nav-tab { padding:14px 24px; font-size:14px; font-weight:500; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.3s; white-space:nowrap; }
+        .nav-tab:hover { color:var(--text-secondary); }
+        .nav-tab.active { color:var(--blue); border-bottom-color:var(--blue); }
+        /* === LAYOUT === */
+        .container { max-width:1280px; margin:0 auto; padding:24px 40px 60px; }
+        .tab-panel { display:none; animation:fadeUp 0.4s ease; }
+        .tab-panel.active { display:block; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        /* === STATS === */
+        .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+        .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:24px; position:relative; overflow:hidden; transition:transform 0.2s, border-color 0.3s; }
+        .stat-card:hover { transform:translateY(-2px); border-color:rgba(255,255,255,0.12); }
+        .stat-card .stat-icon { font-size:28px; margin-bottom:12px; }
+        .stat-card .stat-num { font-size:36px; font-weight:900; line-height:1; }
+        .stat-card .stat-label { font-size:13px; color:var(--text-muted); margin-top:6px; }
+        .stat-card.blue .stat-num { color:var(--blue); }
+        .stat-card.orange .stat-num { color:var(--orange); }
+        .stat-card.green .stat-num { color:var(--green); }
+        .stat-card.purple .stat-num { color:var(--purple); }
+        .stat-card::after { content:''; position:absolute; top:-40%; right:-20%; width:120px; height:120px; border-radius:50%; opacity:0.04; }
+        .stat-card.blue::after { background:var(--blue); }
+        .stat-card.orange::after { background:var(--orange); }
+        .stat-card.green::after { background:var(--green); }
+        .stat-card.purple::after { background:var(--purple); }
+        /* === QUICK LINKS === */
+        .quick-links { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+        .quick-link { display:flex; align-items:center; gap:12px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; cursor:pointer; transition:all 0.2s; }
+        .quick-link:hover { border-color:rgba(59,130,246,0.3); transform:translateY(-2px); }
+        .quick-link .ql-icon { font-size:24px; }
+        .quick-link .ql-text { font-size:13px; font-weight:500; }
+        .quick-link .ql-desc { font-size:11px; color:var(--text-muted); margin-top:2px; }
+        /* === ANNOUNCEMENTS === */
+        .announce-section { margin-bottom:24px; }
+        .section-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+        .section-head h2 { font-size:18px; font-weight:700; }
+        .announce-list { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+        .announce-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:18px; cursor:pointer; transition:all 0.2s; }
+        .announce-card:hover { border-color:rgba(59,130,246,0.3); background:var(--bg-card-hover); }
+        .announce-card .a-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; margin-bottom:8px; }
+        .a-tag.hot { background:rgba(239,68,68,0.15); color:var(--red); }
+        .a-tag.new { background:rgba(16,185,129,0.15); color:var(--green); }
+        .a-tag.info { background:rgba(59,130,246,0.15); color:var(--blue); }
+        .announce-card h4 { font-size:14px; font-weight:600; margin-bottom:6px; line-height:1.4; }
+        .announce-card .a-date { font-size:12px; color:var(--text-muted); }
+        /* === CHARTS === */
+        .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+        .chart-box { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+        .chart-box h3 { font-size:15px; font-weight:600; margin-bottom:12px; color:var(--text-secondary); }
+        .chart-area { width:100%; height:380px; }
+        .chart-full { grid-column:1 / -1; }
+        /* === FILTER BAR === */
+        .filter-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+        .search-box { flex:1; min-width:200px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 16px; color:var(--text-primary); font-size:14px; outline:none; transition:border-color 0.2s; }
+        .search-box::placeholder { color:var(--text-muted); }
+        .search-box:focus { border-color:var(--blue); }
+        .filter-btn { padding:10px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-secondary); font-size:13px; cursor:pointer; transition:all 0.2s; }
+        .filter-btn:hover { border-color:rgba(255,255,255,0.15); }
+        .filter-btn.active { background:rgba(59,130,246,0.15); border-color:var(--blue); color:var(--blue); }
+        .filter-select { padding:10px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-secondary); font-size:13px; cursor:pointer; outline:none; }
+        .filter-select option { background:var(--bg-deep); color:var(--text-primary); }
+        /* === TABLE === */
+        .table-wrap { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+        table { width:100%; border-collapse:collapse; }
+        th { padding:12px 14px; text-align:left; font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; background:rgba(255,255,255,0.02); border-bottom:1px solid var(--border); }
+        td { padding:12px 14px; font-size:13px; border-bottom:1px solid var(--border); color:var(--text-secondary); }
+        tr:last-child td { border-bottom:none; }
+        tr:hover td { background:rgba(255,255,255,0.02); }
+        .uni-name { font-weight:600; color:var(--text-primary); }
+        .rank-badge { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; font-size:12px; font-weight:700; }
+        .rank-1 { background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#000; }
+        .rank-2 { background:linear-gradient(135deg,#d1d5db,#9ca3af); color:#000; }
+        .rank-3 { background:linear-gradient(135deg,#cd7c2f,#b45309); color:#fff; }
+        .rank-n { background:rgba(255,255,255,0.06); color:var(--text-muted); }
+        .tag { display:inline-block; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:500; }
+        .tag-benke { background:rgba(59,130,246,0.12); color:var(--blue); }
+        .tag-zhuanke { background:rgba(245,158,11,0.12); color:var(--orange); }
+        .tag-zsb { background:rgba(16,185,129,0.12); color:var(--green); }
+        .tag-public { background:rgba(139,92,246,0.12); color:var(--purple); }
+        .tag-private { background:rgba(239,68,68,0.12); color:var(--red); }
+        .page-info { padding:14px 16px; font-size:13px; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; }
+        .pagination { display:flex; gap:6px; }
+        .page-btn { padding:6px 12px; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:6px; color:var(--text-secondary); font-size:13px; cursor:pointer; transition:all 0.2s; }
+        .page-btn:hover { border-color:var(--blue); color:var(--blue); }
+        .page-btn.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+        .page-btn:disabled { opacity:0.3; cursor:not-allowed; }
+        /* === LANDMARKS === */
+        .landmarks-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+        .landmark-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; }
+        .landmark-card h3 { font-size:15px; font-weight:600; margin-bottom:14px; }
+        .landmark-list { display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; }
+        .landmark-item { display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(255,255,255,0.02); border-radius:8px; transition:background 0.2s; }
+        .landmark-item:hover { background:rgba(255,255,255,0.05); }
+        .landmark-item .lm-icon { font-size:18px; }
+        .landmark-item .lm-info { flex:1; }
+        .landmark-item .lm-name { font-size:13px; font-weight:500; }
+        .landmark-item .lm-city { font-size:11px; color:var(--text-muted); }
+        /* === ZSB === */
+        .zsb-hero { text-align:center; padding:48px 24px; background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(239,68,68,0.05)); border:1px solid rgba(245,158,11,0.15); border-radius:var(--radius); margin-bottom:24px; position:relative; overflow:hidden; }
+        .zsb-hero::before { content:''; position:absolute; top:-50%; right:-30%; width:300px; height:300px; background:radial-gradient(circle,rgba(245,158,11,0.1),transparent 70%); border-radius:50%; }
+        .zsb-hero h2 { font-size:22px; font-weight:700; margin-bottom:8px; position:relative; }
+        .zsb-countdown { display:flex; justify-content:center; gap:20px; margin:24px 0; position:relative; }
+        .zsb-cd-block { background:rgba(0,0,0,0.3); border:1px solid rgba(245,158,11,0.2); border-radius:12px; padding:16px 24px; min-width:80px; }
+        .zsb-cd-block .cd-num { font-size:40px; font-weight:900; color:var(--orange); line-height:1; }
+        .zsb-cd-block .cd-label { font-size:12px; color:var(--text-muted); margin-top:4px; }
+        .zsb-info-cards { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+        .zsb-info-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:18px; text-align:center; }
+        .zsb-info-card .zi-num { font-size:28px; font-weight:900; color:var(--blue); }
+        /* === SMART TAGS === */
+        .smart-tags { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+        .smart-tag { padding:7px 16px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:20px; font-size:12px; color:var(--text-secondary); cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+        .smart-tag:hover { border-color:var(--blue); color:var(--blue); background:rgba(59,130,246,0.08); }
+        .smart-tag.active { background:rgba(59,130,246,0.15); border-color:var(--blue); color:var(--blue); font-weight:600; }
+        /* === COMPARE BAR === */
+        .compare-bar { position:fixed; bottom:0; left:0; right:0; z-index:200; background:rgba(15,23,42,0.95); backdrop-filter:blur(12px); border-top:1px solid var(--blue); padding:14px 40px; display:flex; align-items:center; gap:16px; transform:translateY(100%); transition:transform 0.3s; }
+        .compare-bar.show { transform:translateY(0); }
+        .compare-bar .cb-count { font-size:14px; color:var(--text-secondary); }
+        .compare-bar .cb-count strong { color:var(--blue); }
+        .compare-bar .cb-names { flex:1; display:flex; gap:8px; flex-wrap:wrap; }
+        .compare-bar .cb-name { padding:4px 12px; background:rgba(59,130,246,0.12); border-radius:6px; font-size:12px; color:var(--blue); display:flex; align-items:center; gap:6px; }
+        .compare-bar .cb-name .cb-rm { cursor:pointer; opacity:0.7; }
+        .compare-bar .cb-name .cb-rm:hover { opacity:1; }
+        .cb-btn { padding:8px 20px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all 0.2s; }
+        .cb-btn-primary { background:var(--blue); color:#fff; }
+        .cb-btn-primary:hover { background:#2563eb; }
+        .cb-btn-primary:disabled { opacity:0.4; cursor:not-allowed; }
+        .cb-btn-clear { background:transparent; border:1px solid var(--border); color:var(--text-secondary); }
+        /* === MODAL === */
+        .modal-overlay { position:fixed; inset:0; z-index:300; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.25s; }
+        .modal-overlay.show { opacity:1; pointer-events:auto; }
+        .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); max-width:900px; width:92vw; max-height:85vh; overflow-y:auto; padding:0; }
+        .modal-head { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--bg-card); z-index:1; }
+        .modal-head h2 { font-size:18px; font-weight:700; }
+        .modal-close { width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:rgba(255,255,255,0.06); color:var(--text-secondary); cursor:pointer; font-size:18px; border:none; }
+        .modal-body { padding:24px; }
+        .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        .detail-item { background:rgba(255,255,255,0.03); border-radius:10px; padding:14px 16px; }
+        .detail-item .di-label { font-size:11px; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
+        .detail-item .di-value { font-size:15px; font-weight:600; color:var(--text-primary); }
+        .detail-item .di-value.highlight { color:var(--blue); }
+        /* Detail Page Tabs */
+        .detail-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:20px; }
+        .detail-tab-btn { padding:12px 20px; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; border:none; background:none; border-bottom:2px solid transparent; transition:all 0.2s; }
+        .detail-tab-btn:hover { color:var(--text-secondary); }
+        .detail-tab-btn.active { color:var(--blue); border-bottom-color:var(--blue); }
+        .detail-tab-panel { display:none; animation:fadeUp 0.3s ease; }
+        .detail-tab-panel.active { display:block; }
+        .detail-mini-map { width:100%; height:200px; border-radius:10px; margin-bottom:16px; background:var(--bg-deep); }
+        .detail-plan-table { width:100%; border-collapse:collapse; font-size:13px; }
+        .detail-plan-table th { padding:10px 12px; text-align:left; font-size:11px; color:var(--text-muted); background:rgba(255,255,255,0.02); border-bottom:1px solid var(--border); }
+        .detail-plan-table td { padding:10px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); }
+        .detail-chart { width:100%; height:250px; }
+        .detail-empty { text-align:center; padding:40px 20px; color:var(--text-muted); font-size:14px; }
+        .detail-info-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+        .compare-grid { display:grid; gap:0; }
+        .compare-row { display:grid; border-bottom:1px solid var(--border); }
+        .compare-row .cr-label { padding:12px 16px; font-size:12px; color:var(--text-muted); font-weight:600; background:rgba(255,255,255,0.02); }
+        .compare-row .cr-cell { padding:12px 16px; font-size:13px; color:var(--text-secondary); text-align:center; }
+        .compare-row .cr-cell.best { color:var(--green); font-weight:700; }
+        .cb-check { width:16px; height:16px; accent-color:var(--blue); cursor:pointer; }
+        /* === DETAIL LINK === */
+        .uni-name { cursor:pointer; }
+        .uni-name:hover { color:var(--blue); text-decoration:underline; }
+        .zsb-info-card .zi-label { font-size:12px; color:var(--text-muted); margin-top:4px; }
+        /* === FAQ === */
+        .faq-section { margin-top:24px; }
+        .faq-item { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; overflow:hidden; }
+        .faq-q { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; cursor:pointer; font-size:14px; font-weight:500; color:var(--text-primary); transition:background 0.2s; }
+        .faq-q:hover { background:rgba(255,255,255,0.03); }
+        .faq-q .faq-arrow { transition:transform 0.3s; color:var(--text-muted); font-size:12px; }
+        .faq-item.open .faq-q .faq-arrow { transform:rotate(90deg); }
+        .faq-a { max-height:0; overflow:hidden; transition:max-height 0.3s ease; }
+        .faq-item.open .faq-a { max-height:300px; }
+        .faq-a-inner { padding:0 18px 14px; font-size:13px; color:var(--text-secondary); line-height:1.8; }
+        .faq-a-inner strong { color:var(--orange); }
+        /* === FLASHCARD === */
+        .flashcard-section { margin-top:24px; }
+        .flashcard-container { display:flex; align-items:center; justify-content:center; gap:20px; margin:20px 0; }
+        .flashcard { width:360px; height:220px; perspective:800px; cursor:pointer; }
+        .flashcard-inner { width:100%; height:100%; position:relative; transition:transform 0.5s; transform-style:preserve-3d; }
+        .flashcard.flipped .flashcard-inner { transform:rotateY(180deg); }
+        .flashcard-front, .flashcard-back { position:absolute; inset:0; backface-visibility:hidden; border-radius:var(--radius); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+        .flashcard-front { background:linear-gradient(135deg,#1e293b,#0f172a); border:2px solid rgba(59,130,246,0.3); }
+        .flashcard-front .fc-word { font-size:36px; font-weight:900; color:var(--text-primary); letter-spacing:1px; }
+        .flashcard-front .fc-phonetic { font-size:14px; color:var(--text-muted); margin-top:8px; }
+        .flashcard-front .fc-hint { font-size:12px; color:var(--text-muted); margin-top:16px; }
+        .flashcard-back { background:linear-gradient(135deg,#1a2538,#111827); border:2px solid rgba(245,158,11,0.3); transform:rotateY(180deg); }
+        .flashcard-back .fc-meaning { font-size:20px; font-weight:700; color:var(--orange); text-align:center; }
+        .flashcard-back .fc-example { font-size:13px; color:var(--text-secondary); margin-top:12px; text-align:center; line-height:1.6; }
+        .fc-nav { display:flex; flex-direction:column; gap:10px; }
+        .fc-btn { width:44px; height:44px; border-radius:12px; background:var(--bg-card); border:1px solid var(--border); color:var(--text-secondary); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+        .fc-btn:hover { border-color:var(--blue); color:var(--blue); }
+        .fc-progress { text-align:center; margin-top:16px; }
+        .fc-progress-bar { width:360px; height:6px; background:rgba(255,255,255,0.06); border-radius:3px; margin:0 auto 8px; overflow:hidden; }
+        .fc-progress-fill { height:100%; background:linear-gradient(90deg,var(--blue),var(--purple)); border-radius:3px; transition:width 0.3s; }
+        .fc-progress-text { font-size:13px; color:var(--text-muted); }
+        .fc-controls { display:flex; gap:10px; justify-content:center; margin-top:14px; }
+        .fc-ctrl-btn { padding:8px 18px; border-radius:8px; font-size:13px; cursor:pointer; border:1px solid var(--border); background:var(--bg-card); color:var(--text-secondary); transition:all 0.2s; }
+        .fc-ctrl-btn:hover { border-color:var(--blue); color:var(--blue); }
+        .fc-ctrl-btn.active { background:rgba(59,130,246,0.15); border-color:var(--blue); color:var(--blue); }
+        /* === SCORE ESTIMATOR === */
+        .score-section { margin-top:24px; }
+        .score-form { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:20px; }
+        .score-field { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; }
+        .score-field label { display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; }
+        .score-field input { width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:var(--text-primary); font-size:18px; font-weight:700; text-align:center; outline:none; transition:border-color 0.2s; }
+        .score-field input:focus { border-color:var(--blue); }
+        .score-field .sf-max { font-size:11px; color:var(--text-muted); text-align:center; margin-top:4px; }
+        .score-result { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:24px; }
+        .score-total { text-align:center; margin-bottom:20px; }
+        .score-total .st-num { font-size:56px; font-weight:900; line-height:1; }
+        .score-total .st-label { font-size:14px; color:var(--text-muted); margin-top:6px; }
+        .score-bars { display:flex; flex-direction:column; gap:10px; }
+        .score-bar-item { display:flex; align-items:center; gap:12px; }
+        .score-bar-label { width:70px; font-size:12px; color:var(--text-muted); text-align:right; }
+        .score-bar-track { flex:1; height:24px; background:rgba(255,255,255,0.04); border-radius:6px; overflow:hidden; position:relative; }
+        .score-bar-fill { height:100%; border-radius:6px; transition:width 0.5s; display:flex; align-items:center; justify-content:flex-end; padding-right:8px; font-size:11px; font-weight:600; color:#fff; }
+        .score-bar-line { position:absolute; top:0; bottom:0; width:2px; background:var(--orange); z-index:1; }
+        .score-bar-line-label { position:absolute; top:-16px; font-size:10px; color:var(--orange); white-space:nowrap; transform:translateX(-50%); }
+        .score-schools { margin-top:20px; }
+        .score-school-tag { display:inline-block; padding:5px 12px; margin:4px; border-radius:20px; font-size:12px; font-weight:500; }
+        .score-school-safe { background:rgba(16,185,129,0.15); color:var(--green); border:1px solid rgba(16,185,129,0.3); }
+        .score-school-mid { background:rgba(245,158,11,0.15); color:var(--orange); border:1px solid rgba(245,158,11,0.3); }
+        .score-school-risk { background:rgba(239,68,68,0.15); color:var(--red); border:1px solid rgba(239,68,68,0.3); }
+        /* === RESPONSIVE === */
+        @media (max-width:900px) {
+            .hero { padding:32px 20px 24px; }
+            .hero-content { flex-direction:column; align-items:flex-start; }
+            .container { padding:16px 20px 40px; }
+            .nav-inner { padding:0 20px; overflow-x:auto; }
+            .stats-grid,.quick-links { grid-template-columns:repeat(2,1fr); }
+            .chart-grid,.landmarks-grid { grid-template-columns:1fr; }
+            .announce-list { grid-template-columns:1fr; }
+            .zsb-info-cards { grid-template-columns:repeat(2,1fr); }
+            .detail-grid { grid-template-columns:1fr; }
+            .detail-tabs { overflow-x:auto; }
+            .detail-tab-btn { padding:10px 14px; font-size:12px; white-space:nowrap; }
+            .modal { width:95vw; max-height:90vh; }
+            .score-form { grid-template-columns:1fr; }
+            .table-wrap { overflow-x:auto; }
+            table { min-width:600px; }
+            .filter-bar { flex-direction:column; }
+            .search-box { min-width:100%; }
+        }
+        @media (max-width:600px) {
+            .stats-grid { grid-template-columns:1fr; }
+            .quick-links { grid-template-columns:1fr; }
+            .zsb-info-cards { grid-template-columns:1fr; }
+            .detail-grid { grid-template-columns:1fr; }
+            .hero-left h1 { font-size:24px; }
+            .countdown-badge { padding:10px 16px; }
+            .countdown-badge .cd-days { font-size:28px; }
+        }
+        ::-webkit-scrollbar { width:6px; height:6px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:3px; }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hero">
+    <div class="hero-content">
+        <div class="hero-left">
+            <h1>贵州高校数据平台</h1>
+            <p>覆盖全省 80 所高校 · 专升本数据一站式查询 · 数据实时可视化</p>
+            <div class="daily-quote" id="dailyQuote"></div>
+        </div>
+        <div class="countdown-badge">
+            <div>
+                <div class="cd-label">距离 2027 专升本考试</div>
+                <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px;">
+                    <span class="cd-days" id="headerDays">--</span>
+                    <span class="cd-unit">天</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NAV -->
+<div class="nav-bar">
+    <div class="nav-inner">
+        <div class="nav-tab active" data-tab="home">首页概览</div>
+        <div class="nav-tab" data-tab="map">高校地图</div>
+        <div class="nav-tab" data-tab="zsb">专升本专区</div>
+        <div class="nav-tab" data-tab="list">高校列表</div>
+    </div>
+</div>
+
+<!-- CONTENT -->
+<div class="container">
+
+    <!-- TAB 1: 首页 -->
+    <div class="tab-panel active" id="tab-home">
+        <div class="stats-grid">
+            <div class="stat-card blue"><div class="stat-icon">🎓</div><div class="stat-num" id="sTotal">--</div><div class="stat-label">高校总数</div></div>
+            <div class="stat-card green"><div class="stat-icon">📘</div><div class="stat-num" id="sBenke">--</div><div class="stat-label">本科院校</div></div>
+            <div class="stat-card orange"><div class="stat-icon">📗</div><div class="stat-num" id="sZhuanke">--</div><div class="stat-label">专科院校</div></div>
+            <div class="stat-card purple"><div class="stat-icon">🚀</div><div class="stat-num" id="sZsb">--</div><div class="stat-label">可专升本院校</div></div>
+        </div>
+        <div class="quick-links">
+            <div class="quick-link" onclick="switchTab('map')"><div class="ql-icon">🗺️</div><div><div class="ql-text">高校地图</div><div class="ql-desc">查看全省高校分布</div></div></div>
+            <div class="quick-link" onclick="switchTab('zsb')"><div class="ql-icon">📊</div><div><div class="ql-text">专升本专区</div><div class="ql-desc">分数线 · 招生计划</div></div></div>
+            <div class="quick-link" onclick="switchTab('list')"><div class="ql-icon">📋</div><div><div class="ql-text">高校列表</div><div class="ql-desc">全部 80 所高校</div></div></div>
+            <div class="quick-link" onclick="switchTab('list');setTimeout(()=>document.getElementById('searchInput').focus(),300)"><div class="ql-icon">🔍</div><div><div class="ql-text">搜索高校</div><div class="ql-desc">按名称/城市搜索</div></div></div>
+        </div>
+        <div class="announce-section">
+            <div class="section-head"><h2>📢 最新公告</h2></div>
+            <div class="announce-list">
+                <div class="announce-card"><span class="a-tag hot">重要</span><h4>2026 年贵州省专升本考试录取工作已结束</h4><div class="a-date">2026-06-01</div></div>
+                <div class="announce-card"><span class="a-tag new">最新</span><h4>平台已收录全省 80 所高校真实地理坐标</h4><div class="a-date">2026-06-11</div></div>
+                <div class="announce-card"><span class="a-tag info">通知</span><h4>专升本历年分数线数据正在采集中，敬请期待</h4><div class="a-date">2026-06-11</div></div>
+            </div>
+        </div>
+        <div class="chart-grid">
+            <div class="chart-box"><h3>各市高校数量分布</h3><div id="homeBarChart" class="chart-area"></div></div>
+            <div class="chart-box"><h3>高校类型分布</h3><div id="homePieChart" class="chart-area"></div></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: 地图 -->
+    <div class="tab-panel" id="tab-map">
+        <div class="filter-bar">
+            <button class="filter-btn active" data-layer="all" onclick="setMapLayer('all',this)">全部标注</button>
+            <button class="filter-btn" data-layer="uni" onclick="setMapLayer('uni',this)">仅高校</button>
+            <button class="filter-btn" data-layer="train" onclick="setMapLayer('train',this)">高铁站</button>
+            <button class="filter-btn" data-layer="mall" onclick="setMapLayer('mall',this)">繁华商圈</button>
+            <select class="filter-select" id="mapCityFilter" onchange="filterMapByCity(this.value)"><option value="all">全部城市</option></select>
+        </div>
+        <div class="chart-box"><div id="mapChart" class="chart-area" style="height:520px;"></div></div>
+        <div class="landmarks-grid">
+            <div class="landmark-card"><h3>🚄 贵州主要高铁站</h3><div class="landmark-list" id="trainList"></div></div>
+            <div class="landmark-card"><h3>🏙️ 主要繁华商圈</h3><div class="landmark-list" id="mallList"></div></div>
+        </div>
+    </div>
+
+    <!-- TAB 3: 专升本 -->
+    <div class="tab-panel" id="tab-zsb">
+        <div class="zsb-hero">
+            <h2>2027 贵州省普通高校专升本考试</h2>
+            <p style="color:var(--text-secondary);font-size:14px;">预计考试时间：2027 年 4 月中旬</p>
+            <div class="zsb-countdown">
+                <div class="zsb-cd-block"><div class="cd-num" id="zDays">--</div><div class="cd-label">天</div></div>
+                <div class="zsb-cd-block"><div class="cd-num" id="zHours">--</div><div class="cd-label">时</div></div>
+                <div class="zsb-cd-block"><div class="cd-num" id="zMins">--</div><div class="cd-label">分</div></div>
+                <div class="zsb-cd-block"><div class="cd-num" id="zSecs">--</div><div class="cd-label">秒</div></div>
+            </div>
+        </div>
+        <div class="zsb-info-cards">
+            <div class="zsb-info-card"><div class="zi-num">32</div><div class="zi-label">招生院校数</div></div>
+            <div class="zsb-info-card"><div class="zi-num" style="color:var(--orange)" id="zsbPlanTotal">--</div><div class="zi-label">招生计划总数</div></div>
+            <div class="zsb-info-card"><div class="zi-num" style="color:var(--green)" id="zsbMajorTotal">--</div><div class="zi-label">招生专业数</div></div>
+            <div class="zsb-info-card" style="text-align:left;padding-left:20px;"><div class="zi-label" style="margin-bottom:6px;">2026年省控线</div><div style="display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;"><span>文史 <strong style="color:var(--orange)">99</strong></span><span>理工 <strong style="color:var(--blue)">49</strong></span><span>艺术文 <strong style="color:var(--purple)">70</strong></span><span>艺术理 <strong style="color:var(--purple)">37</strong></span><span>体育文 <strong style="color:var(--green)">70</strong></span><span>体育理 <strong style="color:var(--green)">36</strong></span></div></div>
+        </div>
+        <div class="announce-section">
+            <div class="section-head"><h2>📚 备考资源</h2></div>
+            <div class="announce-list" style="grid-template-columns:repeat(4,1fr);">
+                <a href="https://www.bilibili.com/search?keyword=贵州专升本英语" target="_blank" class="announce-card" style="text-decoration:none;border-left:3px solid var(--blue);"><span class="a-tag info">B站</span><h4>专升本英语课程</h4><div class="a-date">免费视频 · 语法+阅读+写作</div></a>
+                <a href="https://www.bilibili.com/search?keyword=贵州专升本大学语文" target="_blank" class="announce-card" style="text-decoration:none;border-left:3px solid var(--orange);"><span class="a-tag hot">B站</span><h4>大学语文精讲</h4><div class="a-date">免费视频 · 古文+现代文+作文</div></a>
+                <a href="https://www.bilibili.com/search?keyword=贵州专升本高等数学" target="_blank" class="announce-card" style="text-decoration:none;border-left:3px solid var(--green);"><span class="a-tag new">B站</span><h4>高等数学网课</h4><div class="a-date">免费视频 · 微积分+线代+概率</div></a>
+                <a href="https://zsksy.guizhou.gov.cn" target="_blank" class="announce-card" style="text-decoration:none;border-left:3px solid var(--purple);"><span class="a-tag info">官网</span><h4>贵州招生考试院</h4><div class="a-date">政策公告 · 报名入口 · 成绩查询</div></a>
+            </div>
+        </div>
+        <div class="announce-section">
+            <div class="section-head"><h2>专升本时间线</h2></div>
+            <div class="announce-list" style="grid-template-columns:repeat(4,1fr);">
+                <div class="announce-card" style="border-left:3px solid var(--blue);"><span class="a-tag info">1月</span><h4>发布招生简章</h4><div class="a-date">各校公布招生计划和专业</div></div>
+                <div class="announce-card" style="border-left:3px solid var(--orange);"><span class="a-tag hot">3月</span><h4>统一考试</h4><div class="a-date">文化课 + 专业课考试</div></div>
+                <div class="announce-card" style="border-left:3px solid var(--green);"><span class="a-tag new">4月</span><h4>成绩公布</h4><div class="a-date">查询成绩，公布省控线</div></div>
+                <div class="announce-card" style="border-left:3px solid var(--purple);"><span class="a-tag info">5-6月</span><h4>录取通知</h4><div class="a-date">志愿填报，录取结果公布</div></div>
+            </div>
+        </div>
+        <div class="chart-grid">
+            <div class="chart-box chart-full"><h3>专升本分数线趋势</h3><div id="zsbTrendChart" class="chart-area"></div></div>
+        </div>
+        <h3 style="font-size:16px;font-weight:600;margin:20px 0 12px;">可报考院校（32所）</h3>
+        <div class="table-wrap"><table><thead><tr><th>排名</th><th>院校</th><th>类型</th><th>性质</th><th>城市</th><th>层次</th></tr></thead><tbody id="zsbTbody"></tbody></table></div>
+
+        <h3 style="font-size:16px;font-weight:600;margin:24px 0 12px;">2026 年招生计划（<span id="planCountLabel">加载中</span>）</h3>
+        <div class="filter-bar" style="margin-bottom:12px;">
+            <input type="text" class="search-box" id="planSearch" placeholder="搜索专业名称..." oninput="filterPlans()">
+            <select class="filter-select" id="planUniFilter" onchange="filterPlans()"><option value="all">全部院校</option></select>
+            <select class="filter-select" id="planCatFilter" onchange="filterPlans()"><option value="all">全部类别</option></select>
+        </div>
+        <div class="table-wrap">
+            <table><thead><tr><th>院校</th><th>专业</th><th>类别</th><th>计划数</th><th>学费(元/年)</th><th>学制</th><th>联合培养点</th></tr></thead><tbody id="planTbody"></tbody></table>
+            <div class="page-info"><span id="planInfo">加载中...</span><div class="pagination" id="planPagination"></div></div>
+        </div>
+
+        <div class="chart-grid" style="margin-top:24px;">
+            <div class="chart-box chart-full"><h3>📊 各校招生计划数 Top10</h3><div id="planByUniChart" style="width:100%;height:650px"></div></div>
+            <div class="chart-box chart-full"><h3>📊 热门招生专业 Top10</h3><div id="planByMajorChart" style="width:100%;height:650px"></div></div>
+        </div>
+
+        <div class="faq-section">
+            <div class="section-head"><h2>❓ 专升本报考常见问题</h2></div>
+            <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">什么是专升本？<span class="faq-arrow">▶</span></div><div class="faq-a"><div class="faq-a-inner">专升本是指普通高职（专科）毕业生通过考试进入普通本科高校继续学习的选拔性考试。毕业后获得<strong>全日制本科学历</strong>，第一学历为本科，与高考统招本科具有同等效力。</div></div></div>
+            <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">贵州专升本考试科目有哪些？<span class="faq-arrow">▶</span></div><div class="faq-a"><div class="faq-a-inner">考试分为<strong>文化课</strong>和<strong>专业课</strong>两部分。文化课考英语和大学语文（文科）或高等数学（理科），每科150分，总分300分。专业课由各招生院校自主命题，一般在文化课考试后进行。</div></div></div>
+            <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">哪些人可以报考？<span class="faq-arrow">▶</span></div><div class="faq-a"><div class="faq-a-inner">贵州省普通高校全日制高职（专科）应届毕业生，以及符合条件的退役大学生士兵。在校期间无记过及以上处分，思想品德良好。<strong>每人只有一次报考机会</strong>（退役士兵除外）。</div></div></div>
+            <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">可以跨专业报考吗？<span class="faq-arrow">▶</span></div><div class="faq-a"><div class="faq-a-inner">部分专业有对口限制，需要参照当年公布的<strong>专业对照表</strong>。一般来说，报考专业应与高职所学专业相同或相近。具体以当年招生简章为准。</div></div></div>
+            <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">退役士兵有什么优惠政策？<span class="faq-arrow">▶</span></div><div class="faq-a"><div class="faq-a-inner">退役大学生士兵可享受<strong>免试专升本</strong>政策，需在规定时间内向所在院校提出申请，并提交退役证、身份证等材料。具体政策每年可能调整，建议关注省招生考试院公告。</div></div></div>
+            <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">专升本学历含金量如何？<span class="faq-arrow">▶</span></div><div class="faq-a"><div class="faq-a-inner">专升本毕业后获得<strong>全日制普通本科毕业证书</strong>和<strong>学士学位证书</strong>，在考公、考研、就业等方面与四年制本科具有同等法律效力。第一学历为本科，不标注"专升本"。</div></div></div>
+            <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">什么时候开始准备比较好？<span class="faq-arrow">▶</span></div><div class="faq-a"><div class="faq-a-inner">建议<strong>大二下学期</strong>开始了解政策和确定目标院校，大三上学期系统复习。英语需要长期积累，越早准备越好。不要只顾专业课忽视文化课，两部分都很重要。</div></div></div>
+            <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">可以报考省外院校吗？<span class="faq-arrow">▶</span></div><div class="faq-a"><div class="faq-a-inner"><strong>不可以</strong>。贵州专升本只能报考贵州省内招生院校，不能跨省报考。2026年共有32所省内院校招收专升本学生。</div></div></div>
+        </div>
+
+        <!-- 单词卡片 -->
+        <div class="flashcard-section">
+            <div class="section-head"><h2>📝 专升本英语单词卡片</h2></div>
+            <div class="fc-controls">
+                <button class="fc-ctrl-btn active" onclick="setWordGroup('core')">核心词汇</button>
+                <button class="fc-ctrl-btn" onclick="setWordGroup('high')">高频词汇</button>
+                <button class="fc-ctrl-btn" onclick="setWordGroup('phrase')">常考短语</button>
+            </div>
+            <div class="flashcard-container">
+                <div class="fc-nav"><button class="fc-btn" onclick="prevWord()">◀</button></div>
+                <div class="flashcard" id="flashcard" onclick="this.classList.toggle('flipped')">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front"><div class="fc-word" id="fcWord">abandon</div><div class="fc-phonetic" id="fcPhonetic">/əˈbændən/</div><div class="fc-hint">点击翻转查看释义</div></div>
+                        <div class="flashcard-back"><div class="fc-meaning" id="fcMeaning">v. 放弃；抛弃</div><div class="fc-example" id="fcExample">He abandoned his plan to travel abroad.</div></div>
+                    </div>
+                </div>
+                <div class="fc-nav"><button class="fc-btn" onclick="nextWord()">▶</button></div>
+            </div>
+            <div class="fc-progress"><div class="fc-progress-bar"><div class="fc-progress-fill" id="fcProgressFill" style="width:0%"></div></div><div class="fc-progress-text" id="fcProgressText">1 / 50</div></div>
+        </div>
+
+        <!-- 估分系统 -->
+        <div class="score-section">
+            <div class="section-head"><h2>🎯 专升本估分系统</h2></div>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">贵州专升本总分450分 = 文化课300分（英语150+语文/数学150）+ 专业课150分</p>
+            <div class="score-form">
+                <div class="score-field"><label>英语（满分150）</label><input type="number" id="scoreEnglish" min="0" max="150" placeholder="0" oninput="calcScore()"><div class="sf-max">满分 150 分</div></div>
+                <div class="score-field"><label>大学语文 / 高等数学（满分150）</label><input type="number" id="scoreMajor" min="0" max="150" placeholder="0" oninput="calcScore()"><div class="sf-max">满分 150 分</div></div>
+                <div class="score-field"><label>专业课（满分150）</label><input type="number" id="scoreProf" min="0" max="150" placeholder="0" oninput="calcScore()"><div class="sf-max">各校自主命题 · 满分 150 分</div></div>
+            </div>
+            <div class="score-result" id="scoreResult" style="display:none;">
+                <div style="display:flex;gap:20px;margin-bottom:20px;">
+                    <div class="score-total" style="flex:1"><div class="st-num" id="scoreTotalNum" style="color:var(--blue)">0</div><div class="st-label">总分（满分450）</div></div>
+                    <div class="score-total" style="flex:1"><div class="st-num" id="scoreCultureNum" style="color:var(--orange);font-size:40px">0</div><div class="st-label">文化课（满分300）</div></div>
+                </div>
+                <div style="margin-bottom:16px;"><h4 style="font-size:14px;color:var(--text-secondary);margin-bottom:10px;">📊 文化课 vs 省控线</h4>
+                    <div class="score-bars">
+                        <div class="score-bar-item"><span class="score-bar-label">文史类</span><div class="score-bar-track"><div class="score-bar-line" id="lineWenshi" style="left:33%"><div class="score-bar-line-label">99分</div></div><div class="score-bar-fill" id="barWenshi" style="width:0%;background:var(--orange)"></div></div></div>
+                        <div class="score-bar-item"><span class="score-bar-label">理工类</span><div class="score-bar-track"><div class="score-bar-line" id="lineLigong" style="left:16.3%"><div class="score-bar-line-label">49分</div></div><div class="score-bar-fill" id="barLigong" style="width:0%;background:var(--blue)"></div></div></div>
+                        <div class="score-bar-item"><span class="score-bar-label">艺术文</span><div class="score-bar-track"><div class="score-bar-line" id="lineYishuW" style="left:23.3%"><div class="score-bar-line-label">70分</div></div><div class="score-bar-fill" id="barYishuW" style="width:0%;background:var(--purple)"></div></div></div>
+                        <div class="score-bar-item"><span class="score-bar-label">艺术理</span><div class="score-bar-track"><div class="score-bar-line" id="lineYishuL" style="left:12.3%"><div class="score-bar-line-label">37分</div></div><div class="score-bar-fill" id="barYishuL" style="width:0%;background:var(--purple)"></div></div></div>
+                        <div class="score-bar-item"><span class="score-bar-label">体育文</span><div class="score-bar-track"><div class="score-bar-line" id="lineTyuW" style="left:23.3%"><div class="score-bar-line-label">70分</div></div><div class="score-bar-fill" id="barTyuW" style="width:0%;background:var(--green)"></div></div></div>
+                        <div class="score-bar-item"><span class="score-bar-label">体育理</span><div class="score-bar-track"><div class="score-bar-line" id="lineTyuL" style="left:12%"><div class="score-bar-line-label">36分</div></div><div class="score-bar-fill" id="barTyuL" style="width:0%;background:var(--green)"></div></div></div>
+                    </div>
+                </div>
+                <div class="score-schools"><h4 style="font-size:14px;color:var(--text-secondary);margin-bottom:10px;">🏫 院校推荐（三档）</h4><div id="schoolSuggestion"></div></div>
+            </div>
+        </div>
+    </div>
+    <div class="tab-panel" id="tab-list">
+        <div class="filter-bar">
+            <input type="text" class="search-box" id="searchInput" placeholder="搜索高校名称、城市..." oninput="filterUniversities()">
+            <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">全部</button>
+            <button class="filter-btn" data-filter="本科" onclick="setFilter('本科',this)">本科</button>
+            <button class="filter-btn" data-filter="专科" onclick="setFilter('专科',this)">专科</button>
+            <button class="filter-btn" data-filter="zsb" onclick="setFilter('zsb',this)">可专升本</button>
+            <button class="filter-btn" data-filter="fav" onclick="setFilter('fav',this)">⭐ 收藏</button>
+            <select class="filter-select" id="cityFilter" onchange="filterUniversities()"><option value="all">全部城市</option></select>
+            <select class="filter-select" id="natureFilter" onchange="filterUniversities()"><option value="all">全部性质</option><option value="公办">公办</option><option value="民办">民办</option></select>
+        </div>
+        <div class="smart-tags">
+            <span class="smart-tag" data-tag="public" onclick="toggleSmartTag(this)">🏛️ 公办优先</span>
+            <span class="smart-tag" data-tag="private" onclick="toggleSmartTag(this)">🏷️ 民办本科</span>
+            <span class="smart-tag" data-tag="top30" onclick="toggleSmartTag(this)">🏆 排名前30</span>
+            <span class="smart-tag" data-tag="capital" onclick="toggleSmartTag(this)">🏙️ 贵阳高校</span>
+            <span class="smart-tag" data-tag="zsbhigh" onclick="toggleSmartTag(this)">🚀 热门专升本</span>
+        </div>
+        <div class="table-wrap">
+            <table><thead><tr><th style="width:36px"><input type="checkbox" class="cb-check" id="checkAll" onchange="toggleCheckAll(this)"></th><th>排名</th><th>院校名称</th><th>类型</th><th>性质</th><th>城市</th><th>层次</th><th>可专升本</th></tr></thead><tbody id="uniTbody"></tbody></table>
+            <div class="page-info"><span id="tableInfo">加载中...</span><div class="pagination" id="pagination"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- COMPARE BAR -->
+<div class="compare-bar" id="compareBar">
+    <span class="cb-count">已选 <strong id="cbCount">0</strong> 所（最多4所）</span>
+    <div class="cb-names" id="cbNames"></div>
+    <button class="cb-btn cb-btn-clear" onclick="clearCompare()">清空</button>
+    <button class="cb-btn cb-btn-primary" id="cbCompareBtn" onclick="openCompareModal()" disabled>开始对比</button>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+const API = 'http://localhost:8080';
+let allUniversities = [];
+let allMapData = [];
+let currentFilter = 'all';
+let currentPage = 1;
+const PAGE_SIZE = 20;
+let mapChart = null;
+let currentMapLayer = 'all';
+let zsbTabInitialized = false;
+
+async function fetchJSON(url) {
+    const res = await fetch(API + url);
+    const data = await res.json();
+    return data.data;
+}
+
+// ========== 倒计时 ==========
+function updateCountdowns() {
+    const examDate = new Date('2027-04-12T09:00:00+08:00');
+    const diff = examDate - new Date();
+    if (diff <= 0) { document.getElementById('headerDays').textContent = '0'; return; }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    document.getElementById('headerDays').textContent = d;
+    document.getElementById('zDays').textContent = String(d).padStart(3, '0');
+    document.getElementById('zHours').textContent = String(h).padStart(2, '0');
+    document.getElementById('zMins').textContent = String(m).padStart(2, '0');
+    document.getElementById('zSecs').textContent = String(s).padStart(2, '0');
+}
+
+// ========== 每日名言 ==========
+function initDailyQuote() {
+    const quotes = [
+        { text: '人生没有白走的路，每一步都算数。', author: '李宗盛' },
+        { text: '努力不一定成功，但放弃一定失败。', author: '谚语' },
+        { text: '所有的努力都不会白费，你付出多少时间和精力，都是在对未来的积累。', author: '人民日报' },
+        { text: '当你觉得坚持不下去的时候，其实你已经离成功很近了。', author: '马云' },
+        { text: '不要让未来的你，讨厌现在的自己。', author: '网络' },
+        { text: '你现在的付出，都会是一种沉淀，它们会默默铺路，只为让你成为更好的人。', author: '网络' },
+        { text: '种一棵树最好的时间是十年前，其次是现在。', author: '非洲谚语' },
+        { text: '每一个优秀的人，都有一段沉默的时光。', author: '网络' },
+        { text: '把平凡的事做好就是不平凡，把简单的事做好就是不简单。', author: '张瑞敏' },
+        { text: '成功的秘诀在于每天都比别人多努力一点。', author: '谚语' },
+        { text: '你若不勇敢，没人替你坚强。', author: '网络' },
+        { text: '没有伞的孩子，必须努力奔跑。', author: '网络' },
+        { text: '生活不会因为你是女生就善待你。', author: '网络' },
+        { text: '你必须非常努力，才能看起来毫不费力。', author: '网络' },
+        { text: '今天不走，明天要跑。', author: '哈佛校训' },
+        { text: '只要路是对的，就不怕路远。', author: '谚语' },
+        { text: '含泪播种的人一定能含笑收获。', author: '谚语' },
+        { text: '没有天生的信心，只有不断培养的信心。', author: '谚语' },
+        { text: '专升本不是终点，而是新的起点。', author: '网络' },
+        { text: '你的坚持终将美好。', author: '网络' },
+        { text: '越努力，越幸运。', author: '谚语' },
+        { text: '星光不负赶路人，时光不负有心人。', author: '网络' },
+        { text: '乾坤未定，你我皆是黑马。', author: '网络' },
+        { text: '哪有什么一夜成名，其实都是百炼成钢。', author: '易烊千玺' },
+        { text: '愿你以渺小启程，以伟大结束。', author: '网络' },
+        { text: '看似不起眼的日复一日，会在将来的某一天，突然让你看到坚持的意义。', author: '网络' },
+        { text: '少年的肩应该担起草长莺飞和明月清风。', author: '网络' },
+        { text: '你只管努力，剩下的交给时间。', author: '网络' },
+        { text: '你的名字那么好听，一定要出现在录取通知书上。', author: '网络' },
+        { text: '既然选择了远方，便只顾风雨兼程。', author: '汪国真' },
+    ];
+    const today = new Date();
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+    const q = quotes[dayOfYear % quotes.length];
+    const el = document.getElementById('dailyQuote');
+    if (el) {
+        el.innerHTML = '<div class="dq-text">"' + q.text + '"</div><div class="dq-author">— ' + q.author + '</div>';
+    }
+}
+
+// ========== Tab 切换 ==========
+function switchTab(name) {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+    if (name === 'map' && mapChart) setTimeout(() => mapChart.resize(), 100);
+    if (name === 'zsb' && !zsbTabInitialized) {
+        zsbTabInitialized = true;
+        initZsbTab();
+    }
+}
+document.querySelectorAll('.nav-tab').forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
+
+// ========== 高铁站数据 ==========
+const TRAIN_STATIONS = [
+    { name: '贵阳北站', city: '贵阳', lng: 106.688, lat: 26.648 },
+    { name: '贵阳东站', city: '贵阳', lng: 106.770, lat: 26.590 },
+    { name: '贵安站', city: '贵阳', lng: 106.565, lat: 26.434 },
+    { name: '息烽站', city: '贵阳', lng: 106.741, lat: 27.090 },
+    { name: '遵义站', city: '遵义', lng: 106.954, lat: 27.688 },
+    { name: '遵义南站', city: '遵义', lng: 106.873, lat: 27.561 },
+    { name: '铜仁南站', city: '铜仁', lng: 109.198, lat: 27.626 },
+    { name: '凯里南站', city: '凯里', lng: 107.953, lat: 26.539 },
+    { name: '都匀东站', city: '都匀', lng: 107.596, lat: 26.247 },
+    { name: '安顺西站', city: '安顺', lng: 105.877, lat: 26.220 },
+    { name: '六盘水站', city: '六盘水', lng: 104.841, lat: 26.590 },
+    { name: '毕节站', city: '毕节', lng: 105.414, lat: 27.285 },
+    { name: '兴义南站', city: '兴义', lng: 104.953, lat: 25.088 },
+    { name: '关岭站', city: '安顺', lng: 105.617, lat: 25.943 },
+    { name: '盘州站', city: '六盘水', lng: 104.535, lat: 25.791 },
+    { name: '榕江站', city: '凯里', lng: 108.521, lat: 25.934 },
+    { name: '从江站', city: '凯里', lng: 108.897, lat: 25.743 },
+    { name: '三穗站', city: '凯里', lng: 108.674, lat: 26.951 },
+    { name: '大方站', city: '毕节', lng: 105.608, lat: 27.151 },
+    { name: '织金站', city: '毕节', lng: 105.769, lat: 26.665 },
+];
+
+// ========== 商圈数据（高德地图真实坐标） ==========
+// radius: 圆形覆盖半径(km)，用于地图上显示范围圈
+const MALL_AREAS = [
+    // 贵阳
+    { name: '老城核心商圈', city: '贵阳', lng: 106.705, lat: 26.577, radius: 0.4 },
+    { name: '观山湖商圈', city: '贵阳', lng: 106.621, lat: 26.619, radius: 0.3 },
+    // 遵义
+    { name: '遵义老城商圈', city: '遵义', lng: 106.924, lat: 27.703, radius: 0.3 },
+    { name: '遵义新城商圈', city: '遵义', lng: 106.961, lat: 27.684, radius: 0.25 },
+    // 其他城市
+    { name: '铜仁商圈', city: '铜仁', lng: 109.193, lat: 27.718, radius: 0.2 },
+    { name: '凯里商圈', city: '凯里', lng: 107.981, lat: 26.579, radius: 0.25 },
+    { name: '都匀商圈', city: '都匀', lng: 107.516, lat: 26.276, radius: 0.25 },
+    { name: '六盘水商圈', city: '六盘水', lng: 104.856, lat: 26.579, radius: 0.25 },
+    { name: '毕节商圈', city: '毕节', lng: 105.296, lat: 27.303, radius: 0.25 },
+    { name: '安顺商圈', city: '安顺', lng: 105.940, lat: 26.248, radius: 0.25 },
+    { name: '兴义商圈', city: '兴义', lng: 104.909, lat: 25.089, radius: 0.3 },
+    { name: '清镇商圈', city: '清镇', lng: 106.484, lat: 26.575, radius: 0.15 },
+];
+
+// ========== 单词卡片 ==========
+const WORD_GROUPS = {
+    core: [
+        { word:'abandon', phonetic:'/əˈbændən/', meaning:'v. 放弃；抛弃', example:'He abandoned his plan to travel abroad.' },
+        { word:'achieve', phonetic:'/əˈtʃiːv/', meaning:'v. 达到；取得', example:'She achieved great success in her career.' },
+        { word:'adequate', phonetic:'/ˈædɪkwət/', meaning:'adj. 足够的；适当的', example:'The supply is adequate for our needs.' },
+        { word:'ambitious', phonetic:'/æmˈbɪʃəs/', meaning:'adj. 有抱负的', example:'She is an ambitious young professional.' },
+        { word:'benefit', phonetic:'/ˈbenɪfɪt/', meaning:'n. 利益 v. 受益', example:'Exercise benefits your health greatly.' },
+        { word:'boundary', phonetic:'/ˈbaʊndri/', meaning:'n. 边界；范围', example:'The river forms the boundary between two cities.' },
+        { word:'capable', phonetic:'/ˈkeɪpəbl/', meaning:'adj. 有能力的', example:'She is capable of handling the task.' },
+        { word:'circumstance', phonetic:'/ˈsɜːkəmstəns/', meaning:'n. 环境；情况', example:'Under no circumstance should you give up.' },
+        { word:'commit', phonetic:'/kəˈmɪt/', meaning:'v. 承诺；犯（罪）', example:'He committed to finishing the project.' },
+        { word:'communicate', phonetic:'/kəˈmjuːnɪkeɪt/', meaning:'v. 沟通；传达', example:'It is important to communicate clearly.' },
+        { word:'compete', phonetic:'/kəmˈpiːt/', meaning:'v. 竞争；比赛', example:'Several companies compete for the contract.' },
+        { word:'complex', phonetic:'/ˈkɒmpleks/', meaning:'adj. 复杂的', example:'The problem is more complex than expected.' },
+        { word:'consequence', phonetic:'/ˈkɒnsɪkwəns/', meaning:'n. 结果；后果', example:'Pollution is a consequence of industrialization.' },
+        { word:'contribute', phonetic:'/kənˈtrɪbjuːt/', meaning:'v. 贡献；有助于', example:'Everyone should contribute to society.' },
+        { word:'convenient', phonetic:'/kənˈviːniənt/', meaning:'adj. 方便的', example:'The store is in a convenient location.' },
+        { word:'crucial', phonetic:'/ˈkruːʃəl/', meaning:'adj. 关键的', example:'This is a crucial moment in history.' },
+        { word:'decline', phonetic:'/dɪˈklaɪn/', meaning:'v. 下降；拒绝', example:'Sales have declined this quarter significantly.' },
+        { word:'demonstrate', phonetic:'/ˈdemənstreɪt/', meaning:'v. 证明；演示', example:'The experiment demonstrates the theory.' },
+        { word:'distribute', phonetic:'/dɪˈstrɪbjuːt/', meaning:'v. 分配；分发', example:'Food was distributed to the victims.' },
+        { word:'domestic', phonetic:'/dəˈmestɪk/', meaning:'adj. 国内的', example:'Domestic flights are cheaper than international ones.' },
+        { word:'eliminate', phonetic:'/ɪˈlɪmɪneɪt/', meaning:'v. 消除；淘汰', example:'We must eliminate unnecessary costs.' },
+        { word:'emphasize', phonetic:'/ˈemfəsaɪz/', meaning:'v. 强调；着重', example:'The teacher emphasized the importance of reading.' },
+        { word:'enormous', phonetic:'/ɪˈnɔːməs/', meaning:'adj. 巨大的', example:'The project requires an enormous amount of effort.' },
+        { word:'establish', phonetic:'/ɪˈstæblɪʃ/', meaning:'v. 建立；确立', example:'The company was established in 1990.' },
+        { word:'evaluate', phonetic:'/ɪˈvæljueɪt/', meaning:'v. 评估；评价', example:'Teachers evaluate student performance regularly.' },
+        { word:'evident', phonetic:'/ˈevɪdənt/', meaning:'adj. 明显的', example:'The benefits are evident to everyone.' },
+        { word:'flexible', phonetic:'/ˈfleksəbl/', meaning:'adj. 灵活的', example:'We need a more flexible approach.' },
+        { word:'flourish', phonetic:'/ˈflʌrɪʃ/', meaning:'v. 繁荣；兴旺', example:'The business flourished under new management.' },
+        { word:'frequent', phonetic:'/ˈfriːkwənt/', meaning:'adj. 频繁的', example:'Frequent practice leads to improvement.' },
+        { word:'fundamental', phonetic:'/ˌfʌndəˈmentl/', meaning:'adj. 基本的；根本的', example:'This is a fundamental principle of science.' },
+        { word:'generate', phonetic:'/ˈdʒenəreɪt/', meaning:'v. 产生；引起', example:'Solar panels generate electricity from sunlight.' },
+        { word:'genuine', phonetic:'/ˈdʒenjuɪn/', meaning:'adj. 真正的；真诚的', example:'She showed genuine concern for others.' },
+        { word:'guarantee', phonetic:'/ˌɡærənˈtiː/', meaning:'v. 保证 n. 担保', example:'Hard work guarantees success in the long run.' },
+        { word:'hesitate', phonetic:'/ˈhezɪteɪt/', meaning:'v. 犹豫；迟疑', example:'Do not hesitate to ask for help.' },
+        { word:'hypothesis', phonetic:'/haɪˈpɒθəsɪs/', meaning:'n. 假设；假说', example:'The scientist tested her hypothesis.' },
+        { word:'identical', phonetic:'/aɪˈdentɪkl/', meaning:'adj. 完全相同的', example:'The two documents are almost identical.' },
+        { word:'illustrate', phonetic:'/ɪˈləstreɪt/', meaning:'v. 说明；阐明', example:'The chart illustrates the growth trend.' },
+        { word:'implement', phonetic:'/ˈɪmplɪment/', meaning:'v. 实施；执行', example:'The plan was implemented successfully.' },
+        { word:'incredible', phonetic:'/ɪnˈkredəbl/', meaning:'adj. 难以置信的', example:'The view from the mountain was incredible.' },
+        { word:'inevitable', phonetic:'/ɪnˈevɪtəbl/', meaning:'adj. 不可避免的', example:'Change is inevitable in life.' },
+        { word:'investigate', phonetic:'/ɪnˈvestɪɡeɪt/', meaning:'v. 调查；研究', example:'Police are investigating the incident.' },
+        { word:'justify', phonetic:'/ˈdʒʌstɪfaɪ/', meaning:'v. 证明…正当', example:'Can you justify your decision?' },
+        { word:'knowledge', phonetic:'/ˈnɒlɪdʒ/', meaning:'n. 知识；了解', example:'Knowledge is power in modern society.' },
+        { word:'maintain', phonetic:'/meɪnˈteɪn/', meaning:'v. 维持；保养', example:'We must maintain high standards of quality.' },
+        { word:'negotiate', phonetic:'/nɪˈɡəʊʃieɪt/', meaning:'v. 谈判；协商', example:'They negotiated a better deal for both sides.' },
+        { word:'obstacle', phonetic:'/ˈɒbstəkl/', meaning:'n. 障碍；阻碍', example:'Lack of funding is a major obstacle.' },
+        { word:'obvious', phonetic:'/ˈɒbviəs/', meaning:'adj. 明显的', example:'The answer is obvious to everyone.' },
+        { word:'participate', phonetic:'/pɑːˈtɪsɪpeɪt/', meaning:'v. 参加；参与', example:'All students should participate in class.' },
+        { word:'perspective', phonetic:'/pəˈspektɪv/', meaning:'n. 观点；视角', example:'Try to see things from a different perspective.' },
+        { word:'phenomenon', phonetic:'/fɪˈnɒmɪnən/', meaning:'n. 现象', example:'Global warming is a serious phenomenon.' },
+    ],
+    high: [
+        { word:'adequate', phonetic:'/ˈædɪkwət/', meaning:'adj. 足够的；适当的', example:'The supply is adequate for our needs.' },
+        { word:'anticipate', phonetic:'/ænˈtɪsɪpeɪt/', meaning:'v. 预期；期望', example:'We anticipate a positive outcome soon.' },
+        { word:'appreciate', phonetic:'/əˈpriːʃieɪt/', meaning:'v. 感激；欣赏', example:'I appreciate your help with this project.' },
+        { word:'approximate', phonetic:'/əˈprɒksɪmət/', meaning:'adj. 大约的 v. 接近', example:'The approximate cost is 500 yuan.' },
+        { word:'calculate', phonetic:'/ˈkælkjuleɪt/', meaning:'v. 计算；估计', example:'Can you calculate the total cost?' },
+        { word:'candidate', phonetic:'/ˈkændɪdət/', meaning:'n. 候选人；应试者', example:'There are five candidates for the position.' },
+        { word:'category', phonetic:'/ˈkætəɡəri/', meaning:'n. 类别；种类', example:'Books are organized by category in the library.' },
+        { word:'challenge', phonetic:'/ˈtʃælɪndʒ/', meaning:'n. 挑战 v. 质疑', example:'Starting a business is a big challenge.' },
+        { word:'circumstance', phonetic:'/ˈsɜːkəmstəns/', meaning:'n. 环境；情况', example:'Under the circumstances, we had no choice.' },
+        { word:'collaborate', phonetic:'/kəˈlæbəreɪt/', meaning:'v. 合作；协作', example:'Teams collaborate to solve complex problems.' },
+        { word:'comprehensive', phonetic:'/ˌkɒmprɪˈhensɪv/', meaning:'adj. 全面的；综合的', example:'The report is comprehensive and detailed.' },
+        { word:'concentrate', phonetic:'/ˈkɒnsntreɪt/', meaning:'v. 集中；专注', example:'You need to concentrate on your studies.' },
+        { word:'contemporary', phonetic:'/kənˈtempərəri/', meaning:'adj. 当代的', example:'Contemporary art is often controversial.' },
+        { word:'contribute', phonetic:'/kənˈtrɪbjuːt/', meaning:'v. 贡献；投稿', example:'She contributed articles to the journal.' },
+        { word:'controversial', phonetic:'/ˌkɒntrəˈvɜːʃəl/', meaning:'adj. 有争议的', example:'The decision was highly controversial.' },
+        { word:'cooperate', phonetic:'/kəʊˈɒpəreɪt/', meaning:'v. 合作；配合', example:'The two companies decided to cooperate.' },
+        { word:'cultivate', phonetic:'/ˈkʌltɪveɪt/', meaning:'v. 培养；耕种', example:'Reading helps cultivate critical thinking.' },
+        { word:'curriculum', phonetic:'/kəˈrɪkjələm/', meaning:'n. 课程；课程表', example:'The school updated its curriculum this year.' },
+        { word:'deliberate', phonetic:'/dɪˈlɪbərət/', meaning:'adj. 故意的；慎重的', example:'It was a deliberate attempt to mislead.' },
+        { word:'deteriorate', phonetic:'/dɪˈtɪəriəreɪt/', meaning:'v. 恶化；变坏', example:'His health began to deteriorate rapidly.' },
+        { word:'discipline', phonetic:'/ˈdɪsəplɪn/', meaning:'n. 纪律；学科', example:'Self-discipline is key to success.' },
+        { word:'diverse', phonetic:'/daɪˈvɜːs/', meaning:'adj. 多样的；不同的', example:'The campus has a diverse student body.' },
+        { word:'efficient', phonetic:'/ɪˈfɪʃənt/', meaning:'adj. 高效的', example:'This is a more efficient way to work.' },
+        { word:'elaborate', phonetic:'/ɪˈlæbərət/', meaning:'adj. 精心的 v. 详述', example:'Could you elaborate on your plan?' },
+        { word:'enthusiasm', phonetic:'/ɪnˈθjuːziæzəm/', meaning:'n. 热情；热忱', example:'She showed great enthusiasm for the project.' },
+        { word:'environment', phonetic:'/ɪnˈvaɪrənmənt/', meaning:'n. 环境', example:'We must protect the natural environment.' },
+        { word:'essential', phonetic:'/ɪˈsenʃəl/', meaning:'adj. 必要的；本质的', example:'Sleep is essential for good health.' },
+        { word:'exaggerate', phonetic:'/ɪɡˈzædʒəreɪt/', meaning:'v. 夸张；夸大', example:'Don\'t exaggerate the difficulty of the task.' },
+        { word:'exclusive', phonetic:'/ɪkˈskluːsɪv/', meaning:'adj. 独有的；排他的', example:'This offer is exclusive to members.' },
+        { word:'exhaust', phonetic:'/ɪɡˈzɔːst/', meaning:'v. 使筋疲力尽；用尽', example:'The long journey exhausted everyone.' },
+        { word:'explore', phonetic:'/ɪkˈsplɔːr/', meaning:'v. 探索；考察', example:'Students should explore different career options.' },
+        { word:'fascinate', phonetic:'/ˈfæsɪneɪt/', meaning:'v. 使着迷', example:'The history of ancient China fascinates me.' },
+        { word:'feasible', phonetic:'/ˈfiːzəbl/', meaning:'adj. 可行的', example:'The plan is technically feasible.' },
+        { word:'fluctuate', phonetic:'/ˈflʌktʃueɪt/', meaning:'v. 波动；起伏', example:'Prices fluctuate throughout the year.' },
+        { word:'formulate', phonetic:'/ˈfɔːmjuleɪt/', meaning:'v. 制定；构想', example:'The team formulated a new strategy.' },
+        { word:'generous', phonetic:'/ˈdʒenərəs/', meaning:'adj. 慷慨的；大方的', example:'She is generous with her time and money.' },
+        { word:'genuine', phonetic:'/ˈdʒenjuɪn/', meaning:'adj. 真正的；真诚的', example:'His concern for others is genuine.' },
+        { word:'gradually', phonetic:'/ˈɡrædʒuəli/', meaning:'adv. 逐渐地', example:'The situation is gradually improving.' },
+        { word:'ignorant', phonetic:'/ˈɪɡnərənt/', meaning:'adj. 无知的；不了解的', example:'He was ignorant of the local customs.' },
+        { word:'illustrate', phonetic:'/ɪˈləstreɪt/', meaning:'v. 说明；阐明', example:'The teacher used examples to illustrate the point.' },
+        { word:'immense', phonetic:'/ɪˈmens/', meaning:'adj. 巨大的；极大的', example:'The project requires immense effort.' },
+        { word:'impact', phonetic:'/ˈɪmpækt/', meaning:'n. 影响；冲击', example:'Climate change has a huge impact on wildlife.' },
+        { word:'incentive', phonetic:'/ɪnˈsentɪv/', meaning:'n. 激励；动机', example:'Money is a strong incentive for workers.' },
+        { word:'indispensable', phonetic:'/ˌɪndɪˈspensəbl/', meaning:'adj. 不可缺少的', example:'Water is indispensable for life.' },
+        { word:'influence', phonetic:'/ˈɪnfluəns/', meaning:'n./v. 影响', example:'Parents have a great influence on children.' },
+        { word:'initial', phonetic:'/ɪˈnɪʃəl/', meaning:'adj. 最初的', example:'The initial results are very promising.' },
+        { word:'innovative', phonetic:'/ˈɪnəveɪtɪv/', meaning:'adj. 创新的', example:'The company is known for innovative products.' },
+        { word:'integrate', phonetic:'/ˈɪntɪɡreɪt/', meaning:'v. 整合；融入', example:'Technology should integrate into daily learning.' },
+        { word:'interpret', phonetic:'/ɪnˈtɜːprɪt/', meaning:'v. 解释；翻译', example:'How do you interpret this passage?' },
+        { word:'investigate', phonetic:'/ɪnˈvestɪɡeɪt/', meaning:'v. 调查；研究', example:'Scientists are investigating the cause.' },
+        { word:'logical', phonetic:'/ˈlɒdʒɪkl/', meaning:'adj. 合逻辑的', example:'Your argument is logical and well-reasoned.' },
+    ],
+    phrase: [
+        { word:'account for', phonetic:'', meaning:'占（比例）；解释', example:'Exports account for 30% of total revenue.' },
+        { word:'adapt to', phonetic:'', meaning:'适应', example:'Students must adapt to college life quickly.' },
+        { word:'as a result', phonetic:'', meaning:'因此；结果', example:'He studied hard. As a result, he passed the exam.' },
+        { word:'be aware of', phonetic:'', meaning:'意识到', example:'Everyone should be aware of the risks.' },
+        { word:'be capable of', phonetic:'', meaning:'有能力做', example:'She is capable of leading the team.' },
+        { word:'be supposed to', phonetic:'', meaning:'应该；被期望', example:'You are supposed to arrive on time.' },
+        { word:'break down', phonetic:'', meaning:'分解；出故障', example:'The machine broke down unexpectedly.' },
+        { word:'bring about', phonetic:'', meaning:'引起；导致', example:'Technology has brought about many changes.' },
+        { word:'by means of', phonetic:'', meaning:'通过…方式', example:'They communicate by means of email.' },
+        { word:'call for', phonetic:'', meaning:'要求；需要', example:'The situation calls for immediate action.' },
+        { word:'carry out', phonetic:'', meaning:'执行；实施', example:'We must carry out the plan immediately.' },
+        { word:'come up with', phonetic:'', meaning:'想出；提出', example:'She came up with a brilliant idea.' },
+        { word:'contribute to', phonetic:'', meaning:'有助于；促成', example:'Exercise contributes to good health.' },
+        { word:'cope with', phonetic:'', meaning:'应对；处理', example:'She learned to cope with stress effectively.' },
+        { word:'depend on', phonetic:'', meaning:'取决于；依赖', example:'Success depends on hard work and luck.' },
+        { word:'distinguish from', phonetic:'', meaning:'区分；辨别', example:'Can you distinguish fact from fiction?' },
+        { word:'due to', phonetic:'', meaning:'由于；因为', example:'The flight was delayed due to bad weather.' },
+        { word:'engage in', phonetic:'', meaning:'参与；从事', example:'Students engage in various school activities.' },
+        { word:'figure out', phonetic:'', meaning:'弄清楚；想出', example:'I cannot figure out this math problem.' },
+        { word:'give rise to', phonetic:'', meaning:'引起；导致', example:'Poverty gives rise to many social issues.' },
+        { word:'in addition to', phonetic:'', meaning:'除…之外', example:'In addition to English, she speaks French.' },
+        { word:'in favor of', phonetic:'', meaning:'支持；赞成', example:'Most people voted in favor of the plan.' },
+        { word:'in terms of', phonetic:'', meaning:'就…而言', example:'In terms of quality, this product is the best.' },
+        { word:'keep pace with', phonetic:'', meaning:'跟上…的步伐', example:'Technology keeps pace with modern needs.' },
+        { word:'look forward to', phonetic:'', meaning:'期待', example:'I look forward to hearing from you soon.' },
+        { word:'make up for', phonetic:'', meaning:'弥补；补偿', example:'Nothing can make up for the lost time.' },
+        { word:'on behalf of', phonetic:'', meaning:'代表', example:'I speak on behalf of the whole team.' },
+        { word:'on the contrary', phonetic:'', meaning:'相反', example:'On the contrary, I think it is a good idea.' },
+        { word:'prior to', phonetic:'', meaning:'在…之前', example:'Prior to the meeting, review the documents.' },
+        { word:'regardless of', phonetic:'', meaning:'不管；不顾', example:'We must proceed regardless of the cost.' },
+        { word:'result in', phonetic:'', meaning:'导致；造成', example:'Laziness results in failure over time.' },
+        { word:'take advantage of', phonetic:'', meaning:'利用', example:'Take advantage of every opportunity you get.' },
+        { word:'take into account', phonetic:'', meaning:'考虑到', example:'We must take into account all the factors.' },
+        { word:'turn out', phonetic:'', meaning:'结果是；原来是', example:'The experiment turned out to be successful.' },
+        { word:'with regard to', phonetic:'', meaning:'关于；至于', example:'With regard to your question, here is my answer.' },
+        { word:'work out', phonetic:'', meaning:'解决；锻炼', example:'Things will work out in the end, trust me.' },
+        { word:'boil down to', phonetic:'', meaning:'归结为', example:'The issue boils down to a lack of funding.' },
+        { word:'bring up', phonetic:'', meaning:'提出；抚养', example:'She brought up an interesting point at the meeting.' },
+        { word:'catch up with', phonetic:'', meaning:'赶上', example:'He worked hard to catch up with his classmates.' },
+        { word:'come across', phonetic:'', meaning:'偶然遇到', example:'I came across an old friend at the market.' },
+    ]
+};
+let currentWordGroup = 'core';
+let currentWordIndex = 0;
+let currentWordList = [];
+
+function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function setWordGroup(group) {
+    currentWordGroup = group;
+    currentWordList = shuffleArray(WORD_GROUPS[group]);
+    currentWordIndex = 0;
+    document.querySelectorAll('.fc-ctrl-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    renderWord();
+}
+
+function renderWord() {
+    const words = currentWordList.length ? currentWordList : WORD_GROUPS[currentWordGroup];
+    const w = words[currentWordIndex];
+    document.getElementById('fcWord').textContent = w.word;
+    document.getElementById('fcPhonetic').textContent = w.phonetic;
+    document.getElementById('fcMeaning').textContent = w.meaning;
+    document.getElementById('fcExample').textContent = w.example;
+    document.getElementById('flashcard').classList.remove('flipped');
+    document.getElementById('fcProgressFill').style.width = ((currentWordIndex + 1) / words.length * 100) + '%';
+    document.getElementById('fcProgressText').textContent = (currentWordIndex + 1) + ' / ' + words.length;
+}
+
+function nextWord() {
+    const words = currentWordList.length ? currentWordList : WORD_GROUPS[currentWordGroup];
+    currentWordIndex = (currentWordIndex + 1) % words.length;
+    renderWord();
+}
+
+function prevWord() {
+    const words = currentWordList.length ? currentWordList : WORD_GROUPS[currentWordGroup];
+    currentWordIndex = (currentWordIndex - 1 + words.length) % words.length;
+    renderWord();
+}
+
+// ========== 估分系统 ==========
+function calcScore() {
+    const eng = parseInt(document.getElementById('scoreEnglish').value) || 0;
+    const major = parseInt(document.getElementById('scoreMajor').value) || 0;
+    const prof = parseInt(document.getElementById('scoreProf').value) || 0;
+    const culture = eng + major;  // 文化课总分 300
+    const total = culture + prof; // 总分 450
+    if (total === 0) { document.getElementById('scoreResult').style.display = 'none'; return; }
+    document.getElementById('scoreResult').style.display = 'block';
+    document.getElementById('scoreTotalNum').textContent = total;
+    document.getElementById('scoreCultureNum').textContent = culture;
+
+    const color = total >= 350 ? 'var(--green)' : total >= 280 ? 'var(--orange)' : 'var(--red)';
+    document.getElementById('scoreTotalNum').style.color = color;
+
+    // 对比省控线（文化课满分300）
+    const lines = [
+        { id:'Wenshi', line:99 }, { id:'Ligong', line:49 }, { id:'YishuW', line:70 },
+        { id:'YishuL', line:37 }, { id:'TyuW', line:70 }, { id:'TyuL', line:36 }
+    ];
+    lines.forEach(l => {
+        const pct = Math.min(100, (culture / 300) * 100);
+        document.getElementById('bar' + l.id).style.width = pct + '%';
+    });
+
+    // 学校难度分档（贵州大学不参与专升本，按往年录取热度排序）
+    const hard = ['贵州师范大学','贵州财经大学','贵州医科大学','遵义医科大学','贵州中医药大学','贵州民族大学'];
+    const mid  = ['贵州师范学院','遵义师范学院','贵州理工学院','铜仁学院','凯里学院','安顺学院','贵州工程应用技术学院','黔南民族师范学院','兴义民族师范学院','六盘水师范学院','贵阳学院','贵州商学院','贵州警察学院','贵阳康养职业大学','贵州交通职业大学'];
+    const easy = ['茅台学院','贵阳信息科技学院','贵州黔南科技学院','贵阳人文科技学院','遵义医科大学医学与科技学院','贵州中医药大学时珍学院','贵州医科大学神奇民族医药学院','贵州黔南经济学院'];
+
+    // 根据总分动态分配三档
+    let sprint = [], stable = [], safe = [];
+    const passLine = culture >= 49; // 文化课过最低省控线
+
+    if (!passLine) {
+        // 未过省控线
+        sprint = []; stable = []; safe = [];
+    } else if (total >= 380) {
+        // 高分：冲全部、稳大部分、保易校
+        sprint = hard;
+        stable = mid;
+        safe = easy;
+    } else if (total >= 330) {
+        // 中高分：冲前3难校、稳中等校、保易校
+        sprint = hard.slice(0, 3);
+        stable = hard.slice(3).concat(mid.slice(0, 6));
+        safe = mid.slice(6).concat(easy);
+    } else if (total >= 280) {
+        // 中等分：冲1-2难校、稳部分中校、保易校
+        sprint = hard.slice(0, 1);
+        stable = mid.slice(0, 5);
+        safe = mid.slice(5).concat(easy);
+    } else if (total >= 200) {
+        // 低分：无冲刺、稳难校、保中+易校
+        sprint = [];
+        stable = mid.slice(0, 3);
+        safe = mid.slice(3).concat(easy);
+    } else {
+        // 极低分
+        sprint = [];
+        stable = [];
+        safe = easy;
+    }
+
+    let html = '';
+    if (sprint.length) {
+        html += '<div style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:20px">🔥</span><span style="font-size:14px;font-weight:600;color:var(--red)">冲（冲刺）</span><span style="font-size:12px;color:var(--text-muted)">竞争激烈，有机会但不保证</span></div><div>' + sprint.map(s => '<span class="score-school-tag score-school-risk">' + s + '</span>').join('') + '</div></div>';
+    }
+    if (stable.length) {
+        html += '<div style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:20px">🎯</span><span style="font-size:14px;font-weight:600;color:var(--orange)">稳（稳妥）</span><span style="font-size:12px;color:var(--text-muted)">把握较大，正常发挥即可</span></div><div>' + stable.map(s => '<span class="score-school-tag score-school-mid">' + s + '</span>').join('') + '</div></div>';
+    }
+    if (safe.length) {
+        html += '<div style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:20px">✅</span><span style="font-size:14px;font-weight:600;color:var(--green)">保（保底）</span><span style="font-size:12px;color:var(--text-muted)">基本确定能录取</span></div><div>' + safe.map(s => '<span class="score-school-tag score-school-safe">' + s + '</span>').join('') + '</div></div>';
+    }
+    if (!html) {
+        html = '<div style="text-align:center;padding:20px"><p style="color:var(--red);font-size:14px;font-weight:600">文化课未过省控线，暂无可报考院校</p><p style="color:var(--text-muted);font-size:12px;margin-top:6px">继续努力，距离考试还有时间！</p></div>';
+    }
+    html += '<p style="font-size:11px;color:var(--text-muted);margin-top:12px">* 分档基于学校综合实力和往年录取难度估算，实际录取分数线每年波动，仅供参考</p>';
+    document.getElementById('schoolSuggestion').innerHTML = html;
+}
+
+// ========== 主初始化 ==========
+async function init() {
+    updateCountdowns();
+    setInterval(updateCountdowns, 1000);
+    initDailyQuote();
+    try {
+        const [overview, mapData, unis] = await Promise.all([
+            fetchJSON('/api/stats/overview'),
+            fetchJSON('/api/university/map-data'),
+            fetchJSON('/api/university/list?page=1&size=100')
+        ]);
+        document.getElementById('sTotal').textContent = overview.totalUniversities;
+        document.getElementById('sBenke').textContent = overview.benkeCount;
+        document.getElementById('sZhuanke').textContent = overview.zhuankeCount;
+        document.getElementById('sZsb').textContent = overview.zsbUniversities;
+
+        // 关键修复：按 rankSoft 排序，本科在前专科在后
+        allMapData = mapData;
+        allUniversities = (unis.records || []).sort((a, b) => {
+            const ab = a.type === '本科', bb = b.type === '本科';
+            if (ab && !bb) return -1;
+            if (!ab && bb) return 1;
+            if (ab && bb) return (a.rankSoft || 999) - (b.rankSoft || 999);
+            return a.id - b.id;
+        });
+
+        // 填充城市下拉
+        const cities = [...new Set(allUniversities.map(u => u.city))].sort();
+        [document.getElementById('cityFilter'), document.getElementById('mapCityFilter')].forEach(sel => {
+            cities.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+        });
+
+        initHomeCharts(mapData, overview);
+        initMap(mapData);
+        // initZsbTab() - 延迟到切换到ZSB Tab时加载
+        renderTable();
+        initLandmarks();
+    } catch (e) { console.error('初始化失败:', e); }
+}
+
+// ========== 首页图表 ==========
+function initHomeCharts(mapData, overview) {
+    const cityCount = {};
+    mapData.forEach(u => { cityCount[u.city] = (cityCount[u.city] || 0) + 1; });
+    const sorted = Object.entries(cityCount).sort((a, b) => b[1] - a[1]);
+    echarts.init(document.getElementById('homeBarChart')).setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        grid: { left: 50, right: 20, top: 20, bottom: 40 },
+        xAxis: { type: 'category', data: sorted.map(s => s[0]), axisLabel: { color: '#94a3b8', rotate: 30, fontSize: 11 }, axisLine: { lineStyle: { color: '#1e293b' } } },
+        yAxis: { type: 'value', axisLabel: { color: '#64748b' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+        series: [{ type: 'bar', data: sorted.map(s => s[1]), barWidth: '50%', itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#3b82f6'},{offset:1,color:'#1d4ed8'}]), borderRadius: [4,4,0,0] } }]
+    });
+    const nc = { '公办本科': 0, '民办本科': 0, '公办专科': 0, '民办专科': 0 };
+    allUniversities.forEach(u => { const k = (u.nature === '公办' ? '公办' : '民办') + u.type; nc[k] = (nc[k] || 0) + 1; });
+    echarts.init(document.getElementById('homePieChart')).setOption({
+        tooltip: { trigger: 'item' },
+        legend: { bottom: 0, textStyle: { color: '#94a3b8', fontSize: 11 } },
+        series: [{ type: 'pie', radius: ['35%', '60%'], label: { color: '#94a3b8', formatter: '{b}\n{c}所', fontSize: 11 },
+            data: [
+                { value: nc['公办本科'], name: '公办本科', itemStyle: { color: '#3b82f6' } },
+                { value: nc['民办本科'], name: '民办本科', itemStyle: { color: '#60a5fa' } },
+                { value: nc['公办专科'], name: '公办专科', itemStyle: { color: '#f59e0b' } },
+                { value: nc['民办专科'], name: '民办专科', itemStyle: { color: '#fbbf24' } }
+            ]
+        }]
+    });
+}
+
+// ========== 地图 ==========
+function initMap(mapData) {
+    fetch('https://geo.datav.aliyun.com/areas_v3/bound/520000_full.json').then(r => r.json()).then(geoJson => {
+        echarts.registerMap('guizhou', geoJson);
+        mapChart = echarts.init(document.getElementById('mapChart'));
+        renderMap(mapData, 'all', 'all');
+    });
+}
+
+function buildMapPoints(mapData) {
+    const cityGroups = {};
+    mapData.forEach(u => { const k = u.city || 'x'; if (!cityGroups[k]) cityGroups[k] = []; cityGroups[k].push(u); });
+    const uniPoints = [];
+    Object.values(cityGroups).forEach(group => {
+        const n = group.length;
+        group.forEach((u, i) => {
+            let lng = u.lng, lat = u.lat;
+            if (n > 1) { const a = (2*Math.PI*i)/n + (i%2? -0.15 : 0.2); const r = 0.035*(1+(i%3)*0.35); lng += r*Math.cos(a); lat += r*Math.sin(a); }
+            uniPoints.push({ name: u.name, value: [lng, lat, 1], city: u.city, itemStyle: { color: u.isZsbTarget ? '#f59e0b' : '#3b82f6' } });
+        });
+    });
+    return {
+        uniPoints,
+        trainPoints: TRAIN_STATIONS.map(s => ({ name: s.name, value: [s.lng, s.lat, 1], city: s.city, itemStyle: { color: '#10b981' } })),
+        mallPoints: MALL_AREAS.map(m => ({ name: m.name, value: [m.lng, m.lat, 1], city: m.city, radius: m.radius, itemStyle: { color: '#ef4444' } }))
+    };
+}
+
+function renderMap(mapData, layer, city) {
+    if (!mapChart) return;
+    const { uniPoints, trainPoints, mallPoints } = buildMapPoints(mapData);
+    let fu = uniPoints, ft = trainPoints, fm = mallPoints;
+    if (city !== 'all') { fu = fu.filter(p => p.city === city); ft = ft.filter(p => p.city === city); fm = fm.filter(p => p.city === city); }
+    const show = l => layer === 'all' || layer === l;
+    const series = [];
+    if (show('uni')) {
+        series.push({ name: '高校', type: 'scatter', coordinateSystem: 'geo', data: fu.filter(p => p.itemStyle.color !== '#f59e0b'), symbolSize: 11, z: 3, label: { show: false }, emphasis: { label: { show: true, formatter: '{b}', fontSize: 11, color: '#fff', backgroundColor: 'rgba(0,0,0,0.7)', padding: [4,8], borderRadius: 4 } } });
+        series.push({ name: '可专升本高校', type: 'scatter', coordinateSystem: 'geo', data: fu.filter(p => p.itemStyle.color === '#f59e0b'), symbolSize: 13, z: 3, label: { show: false }, emphasis: { label: { show: true, formatter: '{b}', fontSize: 11, color: '#f59e0b', backgroundColor: 'rgba(0,0,0,0.7)', padding: [4,8], borderRadius: 4 } } });
+    }
+    if (show('train')) series.push({ name: '高铁站', type: 'scatter', coordinateSystem: 'geo', data: ft, symbol: 'diamond', symbolSize: 14, z: 3, label: { show: false }, emphasis: { label: { show: true, formatter: '{b}', fontSize: 11, color: '#10b981', backgroundColor: 'rgba(0,0,0,0.7)', padding: [4,8], borderRadius: 4 } } });
+    if (show('mall')) {
+        // 商圈：小圆形 + 半透明渐变感
+        var mallData = fm.map(function(m) {
+            return { name: m.name, value: [m.value[0], m.value[1], 1], city: m.city, r: m.radius || 0.25 };
+        });
+        series.push({
+            name: '繁华商圈', type: 'scatter', coordinateSystem: 'geo',
+            data: mallData,
+            symbolSize: function(val, params) { return Math.round((params.data.r / 0.25) * 22); },
+            z: 2, symbol: 'circle',
+            itemStyle: { color: 'rgba(239,68,68,0.25)', borderColor: 'rgba(239,68,68,0.6)', borderWidth: 1.5 },
+            label: { show: false },
+            emphasis: { itemStyle: { color: 'rgba(239,68,68,0.45)', borderColor: '#ef4444', borderWidth: 2 } }
+        });
+        // 外层光晕
+        series.push({
+            name: '商圈热力', type: 'scatter', coordinateSystem: 'geo',
+            data: mallData,
+            symbolSize: function(val, params) { return Math.round((params.data.r / 0.25) * 44); },
+            z: 1, symbol: 'circle',
+            itemStyle: { color: 'rgba(239,68,68,0.08)', borderColor: 'transparent', borderWidth: 0 },
+            label: { show: false },
+            silent: true,
+            tooltip: { show: false }
+        });
+    }
+    mapChart.setOption({
+        tooltip: { trigger: 'item', backgroundColor: 'rgba(15,23,42,0.95)', borderColor: 'rgba(255,255,255,0.1)', textStyle: { color: '#f0f4f8', fontSize: 13 },
+            formatter: p => { if (!p.name) return ''; let h = '<b>' + p.name + '</b>'; if (p.seriesName === '可专升本高校') h += ' <span style="color:#f59e0b">可专升本</span>'; if (p.seriesName === '高铁站') h += ' 🚄'; if (p.seriesName === '繁华商圈') h += ' 🏙️'; return h; }
+        },
+        legend: { data: ['高校','可专升本高校','高铁站','繁华商圈','商圈热力'], bottom: 10, textStyle: { color: '#94a3b8', fontSize: 11 } },
+        geo: { map: 'guizhou', roam: true, zoom: 1.15, itemStyle: { areaColor: '#1a2538', borderColor: '#2d3f5a', borderWidth: 1 }, emphasis: { itemStyle: { areaColor: '#243352' } }, label: { show: false } },
+        series: series
+    }, true);
+}
+
+function setMapLayer(layer, btn) {
+    currentMapLayer = layer;
+    document.querySelectorAll('[data-layer]').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderMap(allMapData, layer, document.getElementById('mapCityFilter').value);
+}
+function filterMapByCity(city) { renderMap(allMapData, currentMapLayer, city); }
+
+// ========== 专升本 ==========
+let allPlans = [];
+let planFiltered = [];
+let planPage = 1;
+const PLAN_PAGE_SIZE = 20;
+
+async function initZsbTab() {
+    currentWordList = shuffleArray(WORD_GROUPS[currentWordGroup]);
+    renderWord();
+    const zsb = allUniversities.filter(u => u.isZsbTarget);
+    document.getElementById('zsbTbody').innerHTML = zsb.map(u => `<tr><td>${u.rankSoft ? '<span class="rank-badge '+(u.rankSoft<=3?'rank-'+u.rankSoft:'rank-n')+'">'+u.rankSoft+'</span>' : '-'}</td><td class="uni-name">${u.name}</td><td><span class="tag tag-benke">${u.type}</span></td><td><span class="tag ${u.nature==='公办'?'tag-public':'tag-private'}">${u.nature}</span></td><td>${u.city}</td><td>${u.level||'-'}</td></tr>`).join('');
+
+    // Load 2026 plans
+    try {
+        const resp = await fetch(API + '/api/zsb/plans?year=2026&page=1&size=800');
+        const json = await resp.json();
+        const pageData = json.data || {};
+        allPlans = pageData.records || [];
+
+        // Update info cards
+        const totalPlans = allPlans.reduce((s, p) => s + (p.planCount || 0), 0);
+        const uniqueMajors = new Set(allPlans.map(p => p.majorName)).size;
+        document.getElementById('zsbPlanTotal').textContent = totalPlans;
+        document.getElementById('zsbMajorTotal').textContent = uniqueMajors;
+        document.getElementById('planCountLabel').textContent = allPlans.length + ' 条记录';
+
+        // Build filter dropdowns
+        const uniMap = {};
+        allUniversities.forEach(u => { uniMap[u.id] = u.name; });
+        const uniIds = [...new Set(allPlans.map(p => p.universityId))].sort((a,b) => a-b);
+        const uniFilter = document.getElementById('planUniFilter');
+        uniIds.forEach(uid => {
+            const opt = document.createElement('option');
+            opt.value = uid;
+            opt.textContent = uniMap[uid] || ('ID:' + uid);
+            uniFilter.appendChild(opt);
+        });
+        const cats = [...new Set(allPlans.map(p => p.category).filter(Boolean))].sort();
+        const catFilter = document.getElementById('planCatFilter');
+        cats.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            catFilter.appendChild(opt);
+        });
+
+        planFiltered = [...allPlans];
+        renderPlanTable();
+    } catch (e) {
+        console.warn('加载招生计划失败:', e);
+        document.getElementById('planTbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px;">暂无招生计划数据</td></tr>';
+    }
+
+    const tc = echarts.init(document.getElementById('zsbTrendChart'));
+    fetchJSON('/api/zsb/score-trend?universityId=2&majorName=数据科学与大数据技术').then(data => {
+        if (!data || !data.length) { tc.setOption({ title: { text: '专升本历年分数线数据正在采集中', left: 'center', top: 'center', textStyle: { color: '#64748b', fontSize: 14, fontWeight: 'normal' } } }); return; }
+        tc.setOption({ tooltip: { trigger: 'axis' }, legend: { data: ['分数线','最高分'], bottom: 0, textStyle: { color: '#94a3b8' } }, grid: { left: 50, right: 30, top: 30, bottom: 40 }, xAxis: { type: 'category', data: data.map(d => d.year+'年'), axisLabel: { color: '#94a3b8' }, axisLine: { lineStyle: { color: '#1e293b' } } }, yAxis: { type: 'value', axisLabel: { color: '#64748b' }, splitLine: { lineStyle: { color: '#1e293b' } } }, series: [{ name: '分数线', type: 'line', data: data.map(d => d.totalScore), smooth: true, lineStyle: { width: 3 }, itemStyle: { color: '#f59e0b' }, areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(245,158,11,0.3)'},{offset:1,color:'rgba(245,158,11,0)'}]) } }, { name: '最高分', type: 'line', data: data.map(d => d.maxScore), smooth: true, lineStyle: { width: 2, type: 'dashed' }, itemStyle: { color: '#3b82f6' } }] });
+    }).catch(() => { tc.setOption({ title: { text: '专升本历年分数线数据正在采集中', left: 'center', top: 'center', textStyle: { color: '#64748b', fontSize: 14, fontWeight: 'normal' } } }); });
+
+    // 招生计划分布图表
+    if (allPlans && allPlans.length > 0) {
+        const uniMap = {};
+        allUniversities.forEach(u => { uniMap[u.id] = u.name; });
+
+        // ========== 各校招生计划数 Top10 ==========
+        const uniPlanMap = {};
+        allPlans.forEach(p => {
+            const name = uniMap[p.universityId] || ('ID:' + p.universityId);
+            uniPlanMap[name] = (uniPlanMap[name] || 0) + (p.planCount || 0);
+        });
+        const uniTop = Object.entries(uniPlanMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        const uniChart = echarts.init(document.getElementById('planByUniChart'));
+        uniChart.setOption({
+            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+            grid: { left: 60, right: 30, top: 40, bottom: 100 },
+            xAxis: {
+                type: 'category',
+                data: uniTop.map(d => d[0]),
+                axisLabel: { color: '#94a3b8', fontSize: 12, rotate: 45, interval: 0 },
+                axisTick: { show: false },
+                axisLine: { lineStyle: { color: '#1e293b' } }
+            },
+            yAxis: { type: 'value', show: false },
+            series: [{
+                type: 'bar',
+                data: uniTop.map((d, i) => ({
+                    value: d[1],
+                    itemStyle: { color: ['#8b5cf6','#7c3aed','#6d28d9','#5b21b6','#4c1d95','#3b82f6','#2563eb','#1d4ed8','#1e40af','#1e3a8a'][i] }
+                })),
+                barWidth: '25%',
+                barCategoryGap: '60%',
+                label: { show: true, position: 'top', color: '#e2e8f0', fontSize: 14, fontWeight: 'bold' },
+                itemStyle: { borderRadius: [8, 8, 0, 0] }
+            }]
+        });
+
+        // ========== 热门招生专业 Top10 ==========
+        const majorPlanMap = {};
+        allPlans.forEach(p => {
+            majorPlanMap[p.majorName] = (majorPlanMap[p.majorName] || 0) + (p.planCount || 0);
+        });
+        const majorTop = Object.entries(majorPlanMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        const majorChart = echarts.init(document.getElementById('planByMajorChart'));
+        majorChart.setOption({
+            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+            grid: { left: 60, right: 30, top: 40, bottom: 100 },
+            xAxis: {
+                type: 'category',
+                data: majorTop.map(d => d[0]),
+                axisLabel: { color: '#94a3b8', fontSize: 12, rotate: 45, interval: 0 },
+                axisTick: { show: false },
+                axisLine: { lineStyle: { color: '#1e293b' } }
+            },
+            yAxis: { type: 'value', show: false },
+            series: [{
+                type: 'bar',
+                data: majorTop.map((d, i) => ({
+                    value: d[1],
+                    itemStyle: { color: ['#ef4444','#dc2626','#b91c1c','#f97316','#ea580c','#f59e0b','#d97706','#eab308','#84cc16','#22c55e'][i] }
+                })),
+                barWidth: '25%',
+                barCategoryGap: '60%',
+                label: { show: true, position: 'top', color: '#e2e8f0', fontSize: 14, fontWeight: 'bold' },
+                itemStyle: { borderRadius: [8, 8, 0, 0] }
+            }]
+        });
+
+        window.addEventListener('resize', () => { uniChart.resize(); majorChart.resize(); });
+    }
+}
+
+function filterPlans() {
+    const s = document.getElementById('planSearch').value.trim().toLowerCase();
+    const uniId = document.getElementById('planUniFilter').value;
+    const cat = document.getElementById('planCatFilter').value;
+    planFiltered = allPlans.filter(p => {
+        if (s && !p.majorName.toLowerCase().includes(s)) return false;
+        if (uniId !== 'all' && String(p.universityId) !== uniId) return false;
+        if (cat !== 'all' && p.category !== cat) return false;
+        return true;
+    });
+    planPage = 1;
+    renderPlanTable();
+}
+
+function renderPlanTable() {
+    const uniMap = {};
+    allUniversities.forEach(u => { uniMap[u.id] = u.name; });
+    const totalPages = Math.ceil(planFiltered.length / PLAN_PAGE_SIZE);
+    if (planPage > totalPages) planPage = totalPages || 1;
+    const start = (planPage - 1) * PLAN_PAGE_SIZE;
+    const page = planFiltered.slice(start, start + PLAN_PAGE_SIZE);
+
+    document.getElementById('planTbody').innerHTML = page.map(p =>
+        `<tr><td class="uni-name">${uniMap[p.universityId]||('ID:'+p.universityId)}</td><td>${p.majorName}</td><td>${p.category||'-'}</td><td><strong>${p.planCount||'-'}</strong></td><td>${p.tuition ? p.tuition.toLocaleString() : '-'}</td><td>${p.duration||'-'}</td><td style="color:var(--text-muted);font-size:13px;">${p.campus||'本校'}</td></tr>`
+    ).join('');
+
+    document.getElementById('planInfo').textContent = `共 ${planFiltered.length} 条，第 ${planPage}/${totalPages||1} 页`;
+    let pg = '';
+    if (totalPages > 1) {
+        if (planPage > 1) pg += `<button onclick="goPlanPage(${planPage-1})">‹</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+            if (totalPages > 7 && i > 3 && i < totalPages - 1 && Math.abs(i - planPage) > 1) {
+                if (i === 4 || i === totalPages - 2) pg += '<span style="padding:0 6px;color:var(--text-muted)">...</span>';
+                continue;
+            }
+            pg += `<button class="${i===planPage?'active':''}" onclick="goPlanPage(${i})">${i}</button>`;
+        }
+        if (planPage < totalPages) pg += `<button onclick="goPlanPage(${planPage+1})">›</button>`;
+    }
+    document.getElementById('planPagination').innerHTML = pg;
+}
+function goPlanPage(n) { planPage = n; renderPlanTable(); }
+
+// ========== 高校对比 ==========
+const compareIds = new Set();
+function toggleCompare(id) {
+    if (compareIds.has(id)) { compareIds.delete(id); }
+    else if (compareIds.size >= 4) { return; }
+    else { compareIds.add(id); }
+    updateCompareBar();
+    syncCheckboxes();
+}
+function updateCompareBar() {
+    const bar = document.getElementById('compareBar');
+    const names = document.getElementById('cbNames');
+    const btn = document.getElementById('cbCompareBtn');
+    document.getElementById('cbCount').textContent = compareIds.size;
+    names.innerHTML = [...compareIds].map(id => {
+        const u = allUniversities.find(x => x.id === id);
+        return u ? '<span class="cb-name">' + u.name + ' <span class="cb-rm" onclick="toggleCompare(' + id + ')">×</span></span>' : '';
+    }).join('');
+    btn.disabled = compareIds.size < 2;
+    bar.classList.toggle('show', compareIds.size > 0);
+}
+function syncCheckboxes() {
+    document.querySelectorAll('.uni-cb').forEach(cb => { cb.checked = compareIds.has(Number(cb.dataset.id)); });
+    const all = document.querySelectorAll('.uni-cb');
+    const checked = document.querySelectorAll('.uni-cb:checked');
+    document.getElementById('checkAll').checked = all.length > 0 && all.length === checked.length;
+}
+function toggleCheckAll(el) {
+    const page = getFiltered().slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+    if (el.checked) { page.forEach(u => { if (compareIds.size < 4 || compareIds.has(u.id)) compareIds.add(u.id); }); }
+    else { page.forEach(u => compareIds.delete(u.id)); }
+    updateCompareBar();
+    syncCheckboxes();
+}
+function clearCompare() { compareIds.clear(); updateCompareBar(); syncCheckboxes(); }
+
+function openCompareModal() {
+    const ids = [...compareIds];
+    const unis = ids.map(id => allUniversities.find(u => u.id === id)).filter(Boolean);
+    if (unis.length < 2) return;
+    const cols = unis.length;
+    const fields = [
+        { label: '排名', fn: u => u.rankSoft ? '#' + u.rankSoft : '-', best: 'min' },
+        { label: '类型', fn: u => u.type },
+        { label: '性质', fn: u => u.nature },
+        { label: '城市', fn: u => u.city },
+        { label: '层次', fn: u => u.level || '-' },
+        { label: '可专升本', fn: u => u.isZsbTarget ? '✅ 是' : '否' },
+    ];
+    const gridCols = '160px ' + '1fr '.repeat(cols);
+    let html = '<div class="modal-head"><h2>高校对比（' + cols + '所）</h2><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body"><div class="compare-grid" style="grid-template-columns:' + gridCols + '">';
+    html += '<div class="compare-row" style="display:contents"><div class="cr-label"></div>' + unis.map(u => '<div class="cr-cell" style="font-weight:700;color:var(--text-primary);font-size:14px">' + u.name + '</div>').join('') + '</div>';
+    fields.forEach(f => {
+        const vals = unis.map(f.fn);
+        html += '<div class="compare-row" style="display:contents"><div class="cr-label">' + f.label + '</div>';
+        if (f.best === 'min') {
+            const nums = vals.map(v => v === '-' ? Infinity : parseInt(v.replace('#', '')));
+            const bestIdx = nums.indexOf(Math.min(...nums));
+            html += unis.map((_, i) => '<div class="cr-cell' + (i === bestIdx ? ' best' : '') + '">' + vals[i] + '</div>').join('');
+        } else {
+            html += unis.map((_, i) => '<div class="cr-cell">' + vals[i] + '</div>').join('');
+        }
+        html += '</div>';
+    });
+    html += '</div></div>';
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('modalOverlay').classList.add('show');
+}
+
+function showDetailModal(id) {
+    const u = allUniversities.find(x => x.id === id);
+    if (!u) return;
+    const zsbTag = u.isZsbTarget ? '<span class="tag tag-zsb" style="font-size:13px;padding:5px 14px;">可专升本</span>' : '';
+    const rankHTML = u.rankSoft ? '<span class="rank-badge ' + (u.rankSoft <= 3 ? 'rank-' + u.rankSoft : 'rank-n') + '" style="width:40px;height:40px;font-size:16px;">' + u.rankSoft + '</span>' : '<span style="color:var(--text-muted)">无排名</span>';
+    const typeTag = u.type === '本科' ? '<span class="tag tag-benke">本科</span>' : '<span class="tag tag-zhuanke">专科</span>';
+    const natureTag = u.nature === '公办' ? '<span class="tag tag-public">公办</span>' : '<span class="tag tag-private">民办</span>';
+
+    let html = '<div class="modal-head"><h2>🎓 ' + u.name + '</h2><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body">';
+    html += '<div class="detail-info-bar">' + rankHTML + typeTag + natureTag + zsbTag + '<span style="font-size:12px;color:var(--text-muted)">' + u.city + (u.district ? ' · ' + u.district : '') + '</span></div>';
+    html += '<div class="detail-tabs">';
+    html += '<button class="detail-tab-btn active" onclick="detailTabSwitch(\'overview\',this)">概况</button>';
+    html += '<button class="detail-tab-btn" onclick="detailTabSwitch(\'major\',this)">专业</button>';
+    html += '<button class="detail-tab-btn" onclick="detailTabSwitch(\'zsb\',this)">专升本数据</button>';
+    html += '</div>';
+
+    // Tab 1: Overview
+    html += '<div class="detail-tab-panel active" id="detailTabOverview">';
+    html += '<div class="detail-grid">';
+    const items = [
+        ['类型', u.type, 'highlight'], ['性质', u.nature, ''], ['城市', u.city, ''],
+        ['层次', u.level || '-', ''], ['排名', u.rankSoft ? '#' + u.rankSoft : '未上榜', u.rankSoft && u.rankSoft <= 20 ? 'highlight' : ''],
+        ['可专升本', u.isZsbTarget ? '是' : '否', u.isZsbTarget ? 'highlight' : ''],
+        ['创办年份', u.foundedYear || '-', ''], ['在校人数', u.studentCount ? u.studentCount.toLocaleString() + '人' : '-', ''],
+        ['官网', u.website ? '<a href="' + u.website + '" target="_blank" style="color:var(--blue);text-decoration:none;">访问官网 →</a>' : '-', '']
+    ];
+    items.forEach(function(item) {
+        html += '<div class="detail-item"><div class="di-label">' + item[0] + '</div><div class="di-value ' + item[2] + '">' + item[1] + '</div></div>';
+    });
+    html += '</div>';
+    if (u.longitude && u.latitude) {
+        html += '<div id="detailMiniMap" class="detail-mini-map"></div>';
+    }
+    html += '</div>';
+
+    // Tab 2: Major
+    html += '<div class="detail-tab-panel" id="detailTabMajor">';
+    html += '<div id="detailMajorContent"><div class="detail-empty">加载中...</div></div>';
+    html += '</div>';
+
+    // Tab 3: ZSB
+    html += '<div class="detail-tab-panel" id="detailTabZsb">';
+    if (u.isZsbTarget) {
+        html += '<div id="detailZsbContent"><div class="detail-empty">加载中...</div></div>';
+    } else {
+        html += '<div class="detail-empty">该校不参与专升本招生</div>';
+    }
+    html += '</div>';
+
+    html += '</div>';
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('modalOverlay').classList.add('show');
+
+    // Load data for tabs
+    if (u.longitude && u.latitude) {
+        setTimeout(function() { renderDetailMiniMap(u.longitude, u.latitude, u.name); }, 100);
+    }
+    loadDetailMajors(id);
+    if (u.isZsbTarget) { loadDetailZsbData(id); }
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+
+function detailTabSwitch(tabId, btn) {
+    document.querySelectorAll('.detail-tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.detail-tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    var panel = document.getElementById('detailTab' + tabId.charAt(0).toUpperCase() + tabId.slice(1));
+    if (panel) panel.classList.add('active');
+}
+
+function renderDetailMiniMap(lng, lat, name) {
+    var el = document.getElementById('detailMiniMap');
+    if (!el) return;
+    var chart = echarts.init(el);
+    chart.setOption({
+        geo: { map: 'guizhou', roam: false, zoom: 3, center: [lng, lat], itemStyle: { areaColor: '#1a2538', borderColor: '#2d3f5a' }, label: { show: false }, emphasis: { label: { show: false } } },
+        series: [{ type: 'scatter', coordinateSystem: 'geo', data: [{ name: name, value: [lng, lat, 1] }], symbolSize: 16, itemStyle: { color: '#3b82f6', borderColor: '#fff', borderWidth: 2 }, label: { show: true, formatter: '{b}', position: 'right', color: '#e2e8f0', fontSize: 12, backgroundColor: 'rgba(0,0,0,0.6)', padding: [4,8], borderRadius: 4 } }]
+    });
+    window.addEventListener('resize', function() { chart.resize(); });
+}
+
+function loadDetailMajors(universityId) {
+    var el = document.getElementById('detailMajorContent');
+    if (!el) return;
+    fetch(API + '/api/major/list?universityId=' + universityId)
+        .then(function(r) { return r.json(); })
+        .then(function(json) {
+            var data = json.data || [];
+            if (!data || data.length === 0) {
+                el.innerHTML = '<div class="detail-empty">暂无专业数据</div>';
+                return;
+            }
+            var html = '<table class="detail-plan-table"><thead><tr><th>专业名称</th><th>专业代码</th><th>层次</th></tr></thead><tbody>';
+            data.forEach(function(m) {
+                html += '<tr><td>' + (m.name || '-') + '</td><td>' + (m.code || '-') + '</td><td>' + (m.level || '-') + '</td></tr>';
+            });
+            html += '</tbody></table>';
+            el.innerHTML = html;
+        })
+        .catch(function() {
+            el.innerHTML = '<div class="detail-empty">暂无专业数据</div>';
+        });
+}
+
+function loadDetailZsbData(universityId) {
+    var el = document.getElementById('detailZsbContent');
+    if (!el) return;
+    var html = '';
+
+    // Load plans
+    fetch(API + '/api/zsb/plans?year=2026&page=1&size=200&universityId=' + universityId)
+        .then(function(r) { return r.json(); })
+        .then(function(json) {
+            var plans = (json.data && json.data.records) ? json.data.records : [];
+            if (plans.length > 0) {
+                var totalPlans = plans.reduce(function(s, p) { return s + (p.planCount || 0); }, 0);
+                var uniqueMajors = new Set(plans.map(function(p) { return p.majorName; })).size;
+                html += '<div style="display:flex;gap:16px;margin-bottom:16px;">';
+                html += '<div style="flex:1;background:rgba(59,130,246,0.1);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:24px;font-weight:900;color:var(--blue);">' + totalPlans + '</div><div style="font-size:12px;color:var(--text-muted);">总招生计划</div></div>';
+                html += '<div style="flex:1;background:rgba(245,158,11,0.1);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:24px;font-weight:900;color:var(--orange);">' + uniqueMajors + '</div><div style="font-size:12px;color:var(--text-muted);">招生专业数</div></div>';
+                html += '</div>';
+                html += '<h4 style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">2026年招生计划明细</h4>';
+                html += '<table class="detail-plan-table"><thead><tr><th>专业</th><th>类别</th><th>计划数</th><th>学费</th><th>学制</th></tr></thead><tbody>';
+                plans.forEach(function(p) {
+                    html += '<tr><td>' + (p.majorName || '-') + '</td><td>' + (p.category || '-') + '</td><td><strong>' + (p.planCount || '-') + '</strong></td><td>' + (p.tuition ? p.tuition.toLocaleString() : '-') + '</td><td>' + (p.duration || '-') + '</td></tr>';
+                });
+                html += '</tbody></table>';
+            } else {
+                html += '<div class="detail-empty">暂无2026年招生计划</div>';
+            }
+
+            // Load score trend
+            return fetch(API + '/api/zsb/score-trend?universityId=' + universityId);
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(json) {
+            var trend = json.data || [];
+            if (trend.length > 0) {
+                html += '<h4 style="font-size:14px;color:var(--text-secondary);margin:20px 0 12px;">历年分数线趋势</h4>';
+                html += '<div id="detailScoreChart" class="detail-chart"></div>';
+            }
+            el.innerHTML = html;
+
+            // Render chart if data exists
+            if (trend.length > 0) {
+                setTimeout(function() {
+                    var chartEl = document.getElementById('detailScoreChart');
+                    if (!chartEl) return;
+                    var chart = echarts.init(chartEl);
+                    chart.setOption({
+                        tooltip: { trigger: 'axis' },
+                        grid: { left: 50, right: 20, top: 20, bottom: 30 },
+                        xAxis: { type: 'category', data: trend.map(function(d) { return d.year + '年'; }), axisLabel: { color: '#94a3b8' }, axisLine: { lineStyle: { color: '#1e293b' } } },
+                        yAxis: { type: 'value', axisLabel: { color: '#64748b' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+                        series: [{ type: 'line', data: trend.map(function(d) { return d.totalScore; }), smooth: true, lineStyle: { width: 3, color: '#f59e0b' }, itemStyle: { color: '#f59e0b' }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(245,158,11,0.3)' }, { offset: 1, color: 'rgba(245,158,11,0)' }] } } }]
+                    });
+                    window.addEventListener('resize', function() { chart.resize(); });
+                }, 100);
+            }
+        })
+        .catch(function() {
+            el.innerHTML = '<div class="detail-empty">暂无专升本数据</div>';
+        });
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ========== 智能筛选标签 ==========
+let activeSmartTag = null;
+function toggleSmartTag(el) {
+    const tag = el.dataset.tag;
+    if (activeSmartTag === tag) { activeSmartTag = null; el.classList.remove('active'); }
+    else { document.querySelectorAll('.smart-tag').forEach(t => t.classList.remove('active')); activeSmartTag = tag; el.classList.add('active'); }
+    currentPage = 1;
+    renderTable();
+}
+
+// ========== 高校列表 ==========
+function filterUniversities() { currentPage = 1; renderTable(); }
+function setFilter(f, btn) { currentFilter = f; document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active')); if (btn) btn.classList.add('active'); currentPage = 1; renderTable(); }
+
+function getFiltered() {
+    let list = [...allUniversities];
+    const s = document.getElementById('searchInput').value.trim().toLowerCase();
+    const c = document.getElementById('cityFilter').value;
+    const n = document.getElementById('natureFilter').value;
+    if (s) list = list.filter(u => u.name.toLowerCase().includes(s) || u.city.toLowerCase().includes(s) || (u.shortName||'').toLowerCase().includes(s));
+    if (currentFilter === '本科') list = list.filter(u => u.type === '本科');
+    if (currentFilter === '专科') list = list.filter(u => u.type === '专科');
+    if (currentFilter === 'zsb') list = list.filter(u => u.isZsbTarget);
+    if (currentFilter === 'fav') list = list.filter(u => isFavorite(u.id));
+    if (c !== 'all') list = list.filter(u => u.city === c);
+    if (n !== 'all') list = list.filter(u => u.nature === n);
+    if (activeSmartTag === 'public') list = list.filter(u => u.nature === '公办');
+    if (activeSmartTag === 'private') list = list.filter(u => u.nature === '民办' && u.type === '本科');
+    if (activeSmartTag === 'top30') list = list.filter(u => u.rankSoft && u.rankSoft <= 30);
+    if (activeSmartTag === 'capital') list = list.filter(u => u.city === '贵阳');
+    if (activeSmartTag === 'zsbhigh') list = list.filter(u => u.isZsbTarget && u.rankSoft && u.rankSoft <= 30);
+    return list;
+}
+
+function renderTable() {
+    const filtered = getFiltered();
+    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+    if (currentPage > totalPages) currentPage = totalPages || 1;
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const page = filtered.slice(start, start + PAGE_SIZE);
+    const tbody = document.getElementById('uniTbody');
+    if (!page.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">没有找到匹配的高校</td></tr>'; }
+    else {
+        tbody.innerHTML = page.map(u => `<tr><td><input type="checkbox" class="cb-check uni-cb" data-id="${u.id}" ${compareIds.has(u.id)?'checked':''} onchange="toggleCompare(${u.id})"></td><td>${u.rankSoft ? '<span class="rank-badge '+(u.rankSoft<=3?'rank-'+u.rankSoft:'rank-n')+'">'+u.rankSoft+'</span>' : '<span style="color:var(--text-muted)">-</span>'}</td><td class="uni-name" onclick="showDetailModal(${u.id})">${u.name} <span onclick="event.stopPropagation();toggleFavorite(${u.id})" style="cursor:pointer;font-size:16px;${isFavorite(u.id)?'color:var(--orange)':'color:var(--text-muted)'}">${isFavorite(u.id)?'★':'☆'}</span></td><td><span class="tag ${u.type==='本科'?'tag-benke':'tag-zhuanke'}">${u.type}</span></td><td><span class="tag ${u.nature==='公办'?'tag-public':'tag-private'}">${u.nature}</span></td><td>${u.city}</td><td>${u.level||'-'}</td><td>${u.isZsbTarget?'<span class="tag tag-zsb">是</span>':'<span style="color:var(--text-muted)">-</span>'}</td></tr>`).join('');
+    }
+    document.getElementById('tableInfo').textContent = '共 '+filtered.length+' 所高校，第 '+currentPage+'/'+(totalPages||1)+' 页';
+    let ph = '<button class="page-btn" onclick="goPage('+(currentPage-1)+')" '+(currentPage<=1?'disabled':'')+'>上一页</button>';
+    let sp = Math.max(1, currentPage - 2), ep = Math.min(totalPages, sp + 4);
+    if (ep - sp < 4) sp = Math.max(1, ep - 4);
+    for (let i = sp; i <= ep; i++) ph += '<button class="page-btn '+(i===currentPage?'active':'')+'" onclick="goPage('+i+')">'+i+'</button>';
+    ph += '<button class="page-btn" onclick="goPage('+(currentPage+1)+')" '+(currentPage>=totalPages?'disabled':'')+'>下一页</button>';
+    document.getElementById('pagination').innerHTML = ph;
+}
+function goPage(p) { currentPage = p; renderTable(); }
+
+// ========== 院校收藏 ==========
+function getFavorites() {
+    try { return JSON.parse(localStorage.getItem('gz_favorites') || '[]'); } catch(e) { return []; }
+}
+function toggleFavorite(id) {
+    let favs = getFavorites();
+    if (favs.includes(id)) { favs = favs.filter(f => f !== id); }
+    else { favs.push(id); }
+    localStorage.setItem('gz_favorites', JSON.stringify(favs));
+    renderTable();
+}
+function isFavorite(id) { return getFavorites().includes(id); }
+
+// ========== 地标列表 ==========
+function initLandmarks() {
+    document.getElementById('trainList').innerHTML = TRAIN_STATIONS.map(s => '<div class="landmark-item"><span class="lm-icon">🚄</span><div class="lm-info"><div class="lm-name">'+s.name+'</div><div class="lm-city">'+s.city+'</div></div></div>').join('');
+    document.getElementById('mallList').innerHTML = MALL_AREAS.map(m => '<div class="landmark-item"><span class="lm-icon">🏙️</span><div class="lm-info"><div class="lm-name">'+m.name+'</div><div class="lm-city">'+m.city+'</div></div></div>').join('');
+}
+
+// ========== 窗口缩放 ==========
+window.addEventListener('resize', () => {
+    document.querySelectorAll('.chart-area').forEach(el => { const i = echarts.getInstanceByDom(el); if (i) i.resize(); });
+});
+
+init();
+</script>
+</body>
+</html>
